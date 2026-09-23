@@ -1,4 +1,4 @@
-import type { PluginHost } from "reelvault-sdk/plugin";
+import type { PluginHost } from "@reelvault/sdk/plugin";
 import type { MediaRequestsConfig } from "../config";
 import type { CreateMediaRequestInput, MediaRequest, MediaRequestStatus, MediaRequestUser, RequestsSummary } from "../types";
 

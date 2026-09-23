@@ -1,4 +1,4 @@
-import { definePlugin, type ProviderDiscoveryCategory } from "reelvault-sdk/plugin";
+import { definePlugin, type ProviderDiscoveryCategory } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { AvailabilityService } from "./src/availability";
 import { AvailabilityChecker } from "./src/availability-checker";

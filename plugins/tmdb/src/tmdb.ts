@@ -1,5 +1,5 @@
 import { type Cast, type Crew, type Genre, type Keyword, type Language, type ProductionCompany, TMDB } from "@lorenzopant/tmdb";
-import type { ProviderPersonGender } from "reelvault-sdk/plugin";
+import type { ProviderPersonGender } from "@reelvault/sdk/plugin";
 
 /**
  * TMDB accepts any ISO 639-1 code at runtime, but the SDK types `language` as a

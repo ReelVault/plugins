@@ -1,4 +1,4 @@
-import type { PluginUiHost } from "reelvault-sdk/ui";
+import type { PluginUiHost } from "@reelvault/sdk/ui";
 import type {
 	ComingSoonResponse,
 	DiscoverPage,

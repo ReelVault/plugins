@@ -1,4 +1,4 @@
-import { button, defineSchema, row, stack, stats, text, textField } from "reelvault-sdk/ui/schema";
+import { button, defineSchema, row, stack, stats, text, textField } from "@reelvault/sdk/ui/schema";
 
 /** Admin panel: trailer cache stats, bulk cache and a tester. */
 export default defineSchema({

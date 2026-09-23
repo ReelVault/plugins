@@ -4,14 +4,14 @@
  * manifest (dist/reelvault-catalog.json) consumed by ReelVault servers.
  *
  * For each plugin:
- *   1. bundle index.ts with Bun (reelvault-sdk/* stays external — the host
+ *   1. bundle index.ts with Bun (@reelvault/sdk/* stays external — the host
  *      provides the SDK itself),
  *   2. build the ui/ bundle and compile ui/schema*.ts to JSON,
  *   3. patch plugin.json to point at the bundled entry,
  *   4. zip it, hash it, append a catalog entry.
  */
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, rm, stat, symlink } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { zipSync } from "fflate";
 import { buildVersionHistory, type CatalogVersionEntry, extractArchivedVersion, resolveEntryDate } from "./catalog-history";
@@ -20,7 +20,7 @@ const ROOT = new URL("..", import.meta.url).pathname;
 const PLUGINS_DIR = join(ROOT, "plugins");
 const DIST_DIR = join(ROOT, "dist");
 const CATALOG_FILE_NAME = "reelvault-catalog.json";
-const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/ReelVault.Plugins/main/dist").replace(
+const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/plugins/main/dist").replace(
 	/\/$/,
 	"",
 );
@@ -121,39 +121,6 @@ function isCatalogEntry(value: unknown): value is CatalogEntry {
 }
 
 /**
- * Schema modules import the UI vocabulary from `reelvault-sdk/*`, and nothing
- * installs that package — the host provides it to plugins at runtime. Link
- * `node_modules/reelvault-sdk` onto a server checkout's sdk/ sources so the
- * imports resolve during the build (CI checks the server out into `server/`).
- */
-async function ensureSdkShim(): Promise<void> {
-	const override = process.env.REELVAULT_SDK_PATH;
-	const candidates = [
-		...(override ? [override] : []),
-		join(ROOT, "../reelvault/sdk"),
-		join(ROOT, "../ReelVault.Server/sdk"),
-		join(ROOT, "server/sdk"),
-	];
-	for (const candidate of candidates) {
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(await readFile(join(candidate, "package.json"), "utf8"));
-		} catch {
-			continue;
-		}
-		if (!(isRecord(parsed) && parsed.name === "reelvault-sdk")) continue;
-
-		const link = join(ROOT, "node_modules/reelvault-sdk");
-		await mkdir(join(ROOT, "node_modules"), { recursive: true });
-		await rm(link, { force: true, recursive: true });
-		await symlink(candidate, link, "dir");
-		return;
-	}
-
-	throw new Error("reelvault-sdk sources not found — check out the server next to this repository or set REELVAULT_SDK_PATH");
-}
-
-/**
  * Reads the previously published catalog so its entries can seed the version
  * history. Must run before the manifest is overwritten at the end of the build.
  */
@@ -201,7 +168,7 @@ async function* walk(directory: string): AsyncGenerator<[string, Uint8Array]> {
 }
 
 async function bundle(source: string, outdir: string): Promise<void> {
-	const proc = Bun.spawn(["bun", "build", source, "--outdir", outdir, "--target", "bun", "--external", "reelvault-sdk"], {
+	const proc = Bun.spawn(["bun", "build", source, "--outdir", outdir, "--target", "bun", "--external", "@reelvault/sdk"], {
 		cwd: ROOT,
 		stdout: "inherit",
 		stderr: "inherit",
@@ -241,7 +208,7 @@ async function buildPluginUi(sourceDir: string): Promise<void> {
 /**
  * Compiles every type-safe schema module (`ui/schema.ts`, `ui/schema-*.ts`) to
  * `ui/dist/<name>.json`, which the plugin's `ui.json` references via `schemaRef`.
- * Each module default-exports a schema produced by `reelvault-sdk/ui` builders.
+ * Each module default-exports a schema produced by `@reelvault/sdk/ui` builders.
  */
 async function buildPluginSchema(sourceDir: string): Promise<void> {
 	const uiDir = join(sourceDir, "ui");
@@ -291,7 +258,6 @@ async function stageUiAssets(sourceDist: string, stagingDir: string): Promise<vo
 }
 
 const catalogEntries: CatalogEntry[] = [];
-await ensureSdkShim();
 const previousEntries = await readPreviousEntries();
 
 for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true }))

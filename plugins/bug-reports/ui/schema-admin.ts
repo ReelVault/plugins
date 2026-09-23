@@ -1,4 +1,4 @@
-import { button, defineSchema, grid, row, selectField, stats, table, textField } from "reelvault-sdk/ui/schema";
+import { button, defineSchema, grid, row, selectField, stats, table, textField } from "@reelvault/sdk/ui/schema";
 
 /** Declarative admin panel: stats, filters and a reports table. */
 export default defineSchema({

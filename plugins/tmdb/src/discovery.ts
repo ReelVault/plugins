@@ -5,7 +5,7 @@ import type {
 	ProviderMediaType,
 	ProviderResultGenre,
 	ProviderSearchResult,
-} from "reelvault-sdk/plugin";
+} from "@reelvault/sdk/plugin";
 import { type TMDBApi, toLanguage } from "./tmdb";
 
 /** Minimal structural shape shared by every TMDB list/result item. */

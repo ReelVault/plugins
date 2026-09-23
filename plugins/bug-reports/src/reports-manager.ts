@@ -1,4 +1,4 @@
-import type { PluginHost } from "reelvault-sdk/plugin";
+import type { PluginHost } from "@reelvault/sdk/plugin";
 import type { BugReportsConfig } from "../config";
 import type {
 	BugReport,

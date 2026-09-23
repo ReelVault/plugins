@@ -10,7 +10,7 @@ import {
 	textareaField,
 	textField,
 	when,
-} from "reelvault-sdk/ui/schema";
+} from "@reelvault/sdk/ui/schema";
 
 /**
  * "Report a bug" dialog: only the title shows first; the rest expands under

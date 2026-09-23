@@ -1,4 +1,4 @@
-import type { ProviderEpisodeResult, ProviderSeasonResult } from "reelvault-sdk/plugin";
+import type { ProviderEpisodeResult, ProviderSeasonResult } from "@reelvault/sdk/plugin";
 import { type OMDbApi, type OmdbEpisode, parseNumber, toReleaseDate } from "../omdb";
 
 export async function getSeason(api: OMDbApi, externalId: string, seasonNumber: number): Promise<ProviderSeasonResult | null> {

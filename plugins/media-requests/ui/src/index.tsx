@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { definePluginElement, mountShadow, type PluginUiHost } from "reelvault-sdk/ui";
+import { definePluginElement, mountShadow, type PluginUiHost } from "@reelvault/sdk/ui";
 import { AdminPage } from "./admin";
 import { DashboardComingSoon } from "./dashboard-section";
 import { DetailView } from "./detail";

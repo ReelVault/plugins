@@ -1,4 +1,4 @@
-import type { PluginHost } from "reelvault-sdk/plugin";
+import type { PluginHost } from "@reelvault/sdk/plugin";
 import type { WebhooksConfig } from "../config";
 import type { WebhookDeliveryLog, WebhookEventName, WebhooksStatusResponse, WebhookTarget, WebhookTestResult } from "../types";
 

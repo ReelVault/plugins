@@ -1,4 +1,4 @@
-import type { ProviderEpisodeResult } from "reelvault-sdk/plugin";
+import type { ProviderEpisodeResult } from "@reelvault/sdk/plugin";
 import type { TMDBApi } from "../tmdb";
 
 export async function getDetailsEpisode(

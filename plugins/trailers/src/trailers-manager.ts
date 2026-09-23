@@ -1,4 +1,4 @@
-import type { PluginHost } from "reelvault-sdk/plugin";
+import type { PluginHost } from "@reelvault/sdk/plugin";
 import type { TrailersConfig } from "../config";
 import type { TrailerInfo, TrailersStats } from "../types";
 import { TmdbTrailersClient } from "./tmdb-trailers.client";

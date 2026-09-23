@@ -7,7 +7,7 @@ import type {
 	ProviderSearchResponse,
 	ProviderSeasonResult,
 	ProviderStatus,
-} from "reelvault-sdk/plugin";
+} from "@reelvault/sdk/plugin";
 import type { MediaRequestType } from "../types";
 
 export interface DiscoveryQuery {

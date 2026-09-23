@@ -5,7 +5,7 @@ import type {
 	ProviderMetadataResult,
 	ProviderSearchResult,
 	ProviderSeasonResult,
-} from "reelvault-sdk/plugin";
+} from "@reelvault/sdk/plugin";
 import type { TmdbConfig } from "../config";
 import { discoverTmdb, getTmdbGenres } from "./discovery";
 import { getDetailsEpisode } from "./routes/details-episode";

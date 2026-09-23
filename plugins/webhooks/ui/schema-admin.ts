@@ -1,4 +1,4 @@
-import { button, defineSchema, row, stats, table } from "reelvault-sdk/ui/schema";
+import { button, defineSchema, row, stats, table } from "@reelvault/sdk/ui/schema";
 
 /** Admin panel: delivery stats, test/clear actions and the delivery log. */
 export default defineSchema({

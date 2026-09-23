@@ -1,4 +1,4 @@
-import type { ProviderSearchResult } from "reelvault-sdk/plugin";
+import type { ProviderSearchResult } from "@reelvault/sdk/plugin";
 import type { DiscoverPage, MediaCard, MediaDetails, MediaGenre, MediaRequestType, MediaSearchResults, MediaSeasonDetails } from "../types";
 import type { AvailabilityService, ItemAvailability } from "./availability";
 import type { DiscoveryQuery, ProviderAccess } from "./provider-access";

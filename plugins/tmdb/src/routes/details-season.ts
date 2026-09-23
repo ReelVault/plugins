@@ -1,4 +1,4 @@
-import type { ProviderSeasonResult } from "reelvault-sdk/plugin";
+import type { ProviderSeasonResult } from "@reelvault/sdk/plugin";
 import type { TMDBApi } from "../tmdb";
 
 export async function getDetailsSeason(api: TMDBApi, externalId: string, seasonNumber: number): Promise<ProviderSeasonResult | null> {

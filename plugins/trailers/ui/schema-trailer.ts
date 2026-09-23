@@ -1,4 +1,4 @@
-import { button, defineSchema, embed, stack, text, when } from "reelvault-sdk/ui/schema";
+import { button, defineSchema, embed, stack, text, when } from "@reelvault/sdk/ui/schema";
 
 /** Trailer dialog: fetch the trailer for the current title and embed it. */
 export default defineSchema({

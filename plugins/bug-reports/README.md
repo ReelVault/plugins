@@ -24,7 +24,7 @@ Lets users report bugs, playback problems, bad metadata and UI glitches straight
 ## Frontend (`ui/` + `ui.json`)
 
 The plugin is fully self-contained and uses **declarative schemas**: the host
-(ReelVault.Website) renders the UI with its own components (Dialog, Input, Select,
+(website) renders the UI with its own components (Dialog, Input, Select,
 Textarea, Table…), so it matches the app and the host contains no plugin-specific
 code. Schemas are data — they cannot run code; data and mutations go through the
 plugin's backend routes.
@@ -34,4 +34,4 @@ plugin's backend routes.
 - `ui/schema-admin.ts` → the admin panel (stats, filters, report table, row actions).
 - `ui.json` declares the surfaces with `schemaRef` (`./dist/ui/schema-*.json`) and the `root-floating-overlay` and `details-action-bar` slots that open the dialog.
 
-Builder: `reelvault-sdk/ui/schema` (`defineSchema`, `textField`, `table`, `button`, …). `bun run build-catalog` compiles `schema*.ts` to `dist/ui/schema-*.json` and packs it into the plugin archive.
+Builder: `@reelvault/sdk/ui/schema` (`defineSchema`, `textField`, `table`, `button`, …). `bun run build-catalog` compiles `schema*.ts` to `dist/ui/schema-*.json` and packs it into the plugin archive.

@@ -1,4 +1,4 @@
-import type { ProviderSearchResult } from "reelvault-sdk/plugin";
+import type { ProviderSearchResult } from "@reelvault/sdk/plugin";
 import { extractYear, getImageUrl, type OMDbApi } from "../omdb";
 
 export async function searchTitles(api: OMDbApi, type: "movie" | "tv_show", query: string, year?: number): Promise<ProviderSearchResult[]> {

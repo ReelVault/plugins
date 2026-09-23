@@ -14,21 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # build-catalog links node_modules/reelvault-sdk onto these SDK sources —
-      # schema modules import the UI vocabulary from it during the build.
-      - name: Check out the server SDK sources
-        uses: actions/checkout@v4
-        with:
-          repository: ReelVault/ReelVault.Server
-          ref: main
-          path: server
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: "latest"
-      # The SDK shim points at server/sdk, whose exports resolve into the
-      # tsdown-built dist/ — git-ignored, so it must be produced here.
-      - name: Build the server SDK
-        run: cd server && bun install --frozen-lockfile && bun run build-sdk
       - run: bun install --frozen-lockfile
       - run: bun run build-catalog
         env:

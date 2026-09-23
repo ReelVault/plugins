@@ -6,7 +6,7 @@ import type {
 	ProviderMetadataResult,
 	ProviderSearchResult,
 	ProviderSeasonResult,
-} from "reelvault-sdk/plugin";
+} from "@reelvault/sdk/plugin";
 import type { OmdbConfig } from "../config";
 import { isValidImdbId, OMDbApi } from "./omdb";
 import { getDetails } from "./routes/details";

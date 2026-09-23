@@ -1,4 +1,4 @@
-import type { MetadataProviderContext, ProviderRating, ProviderResultCast, ProviderResultCrew } from "reelvault-sdk/plugin";
+import type { MetadataProviderContext, ProviderRating, ProviderResultCast, ProviderResultCrew } from "@reelvault/sdk/plugin";
 
 export type OmdbPlot = "short" | "full";
 export type OmdbMediaType = "movie" | "series";

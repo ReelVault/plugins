@@ -1,4 +1,4 @@
-import { defineConfig, field, type InferConfig } from "reelvault-sdk/plugin";
+import { defineConfig, field, type InferConfig } from "@reelvault/sdk/plugin";
 
 /** BCP-47-ish language tag accepted by TMDB, e.g. `pl` or `pt-BR`. */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[A-Z]{2})?$/;

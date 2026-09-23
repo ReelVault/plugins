@@ -1,4 +1,4 @@
-import { definePlugin } from "reelvault-sdk/plugin";
+import { definePlugin } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { createOmdbProvider } from "./src/provider";
 

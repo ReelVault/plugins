@@ -1,4 +1,4 @@
-import type { ProviderMetadataResult } from "reelvault-sdk/plugin";
+import type { ProviderMetadataResult } from "@reelvault/sdk/plugin";
 import type { TMDBApi } from "../tmdb";
 
 export async function getDetailsMovie(api: TMDBApi, id: string): Promise<ProviderMetadataResult | null> {

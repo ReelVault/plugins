@@ -1,4 +1,4 @@
-import { definePlugin } from "reelvault-sdk/plugin";
+import { definePlugin } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import type { CreateSegmentRequest, SegmentSubmission, SegmentType, UpdateSegmentRequest, VoteSegmentRequest } from "./types";
 

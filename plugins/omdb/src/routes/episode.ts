@@ -1,4 +1,4 @@
-import type { ProviderEpisodeResult } from "reelvault-sdk/plugin";
+import type { ProviderEpisodeResult } from "@reelvault/sdk/plugin";
 import { buildCast, getImageUrl, isAvailable, type OMDbApi, parseNumber, toReleaseDate } from "../omdb";
 
 export async function getEpisode(

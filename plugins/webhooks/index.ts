@@ -1,4 +1,4 @@
-import { definePlugin, ok } from "reelvault-sdk/plugin";
+import { definePlugin, ok } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { WebhookManager } from "./src/webhook-manager";
 

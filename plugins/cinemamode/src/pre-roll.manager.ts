@@ -1,4 +1,4 @@
-import type { PluginHost, ProviderSearchResult } from "reelvault-sdk/plugin";
+import type { PluginHost, ProviderSearchResult } from "@reelvault/sdk/plugin";
 import type { CinemamodeConfig } from "../config";
 import type { PreRollCacheEntry, PreRollEntry, PreRollResponse } from "../types";
 import { TmdbClient } from "./tmdb.client";

@@ -1,4 +1,4 @@
-import { definePlugin, ok, route, t } from "reelvault-sdk/plugin";
+import { definePlugin, ok, route, t } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { TrailersManager } from "./src/trailers-manager";
 

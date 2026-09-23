@@ -1,4 +1,4 @@
-import type { ProviderSearchResult } from "reelvault-sdk/plugin";
+import type { ProviderSearchResult } from "@reelvault/sdk/plugin";
 import { type TMDBApi, toLanguage } from "../tmdb";
 
 export async function searchMovie(api: TMDBApi, query: string, year?: number): Promise<ProviderSearchResult[]> {

@@ -1,4 +1,4 @@
-import type { MetadataAvailability, PluginHost } from "reelvault-sdk/plugin";
+import type { MetadataAvailability, PluginHost } from "@reelvault/sdk/plugin";
 import type { MediaRequest, MediaRequestType } from "../types";
 import type { RequestsManager } from "./requests-manager";
 

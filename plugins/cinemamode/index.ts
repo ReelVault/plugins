@@ -1,4 +1,4 @@
-import { definePlugin, fail, ok } from "reelvault-sdk/plugin";
+import { definePlugin, fail, ok } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { PreRollManager } from "./src/pre-roll.manager";
 import type { PreRollResponse } from "./types";

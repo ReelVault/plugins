@@ -1,4 +1,4 @@
-import type { ProviderMetadataResult, ProviderSeasonResult } from "reelvault-sdk/plugin";
+import type { ProviderMetadataResult, ProviderSeasonResult } from "@reelvault/sdk/plugin";
 import {
 	buildCast,
 	buildCrew,

@@ -1,4 +1,4 @@
-import { defineConfig, field, type InferConfig } from "reelvault-sdk/plugin";
+import { defineConfig, field, type InferConfig } from "@reelvault/sdk/plugin";
 
 export const config = defineConfig({
 	enabled: field.boolean({
