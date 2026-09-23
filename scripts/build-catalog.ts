@@ -19,6 +19,7 @@ import { buildVersionHistory, type CatalogVersionEntry, extractArchivedVersion, 
 const ROOT = new URL("..", import.meta.url).pathname;
 const PLUGINS_DIR = join(ROOT, "plugins");
 const DIST_DIR = join(ROOT, "dist");
+const DIST_PLUGINS_DIR = join(DIST_DIR, "plugins");
 const CATALOG_FILE_NAME = "reelvault-catalog.json";
 const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/plugins/main/dist").replace(
 	/\/$/,
@@ -138,9 +139,10 @@ async function readPreviousEntries(): Promise<CatalogEntry[]> {
 /** Checksums of previously published `<id>-<version>.zip` archives still sitting in dist. */
 async function archivedChecksums(pluginId: string): Promise<Map<string, string>> {
 	const checksums = new Map<string, string>();
+	const pluginDistDir = join(DIST_PLUGINS_DIR, pluginId);
 	let names: string[];
 	try {
-		names = await readdir(DIST_DIR);
+		names = await readdir(pluginDistDir);
 	} catch {
 		return checksums;
 	}
@@ -149,11 +151,33 @@ async function archivedChecksums(pluginId: string): Promise<Map<string, string>>
 		const version = extractArchivedVersion(name, pluginId);
 		if (version === undefined || checksums.has(version)) continue;
 
-		const zip = await readFile(join(DIST_DIR, name));
+		const zip = await readFile(join(pluginDistDir, name));
 		checksums.set(version, `sha256-${createHash("sha256").update(zip).digest("hex")}`);
 	}
 
 	return checksums;
+}
+
+/**
+ * Newest source modification time of a plugin (recursively, skipping build
+ * output and dependency folders). Compared against the packaged zip's mtime to
+ * skip repackaging plugins whose sources have not changed since.
+ */
+async function newestSourceMtime(sourceDir: string): Promise<number> {
+	const SKIP = new Set(["node_modules", "dist", ".git"]);
+	let newest = 0;
+	for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
+		if (SKIP.has(entry.name)) continue;
+
+		const path = join(sourceDir, entry.name);
+		if (entry.isDirectory()) {
+			newest = Math.max(newest, await newestSourceMtime(path));
+		} else {
+			newest = Math.max(newest, (await stat(path)).mtimeMs);
+		}
+	}
+
+	return newest;
 }
 
 async function* walk(directory: string): AsyncGenerator<[string, Uint8Array]> {
@@ -260,17 +284,45 @@ async function stageUiAssets(sourceDist: string, stagingDir: string): Promise<vo
 const catalogEntries: CatalogEntry[] = [];
 const previousEntries = await readPreviousEntries();
 
-for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true }))
-	.filter((entry) => entry.isDirectory())
-	.map((entry) => entry.name)) {
-	const sourceDir = join(PLUGINS_DIR, pluginDirName);
-	const manifest = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
-	const sidecar = await readCatalogSidecar(join(sourceDir, "catalog.json"));
-	const previous = previousEntries.find((candidate) => candidate.id === manifest.id);
+	for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true }))
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name)) {
+		const sourceDir = join(PLUGINS_DIR, pluginDirName);
+		const manifest = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
+		const sidecar = await readCatalogSidecar(join(sourceDir, "catalog.json"));
+		const previous = previousEntries.find((candidate) => candidate.id === manifest.id);
 
-	const stagingDir = join(DIST_DIR, ".build", manifest.id);
-	await rm(stagingDir, { recursive: true, force: true });
-	await mkdir(stagingDir, { recursive: true });
+		const zipName = `${manifest.id}-${manifest.version}.zip`;
+		const zipPath = join(DIST_PLUGINS_DIR, manifest.id, zipName);
+		const entryBase = {
+			id: manifest.id,
+			name: manifest.name,
+			version: manifest.version,
+			...(manifest.description ? { description: manifest.description } : {}),
+			category: sidecar.category ?? "other",
+			...(sidecar.homepage ? { homepage: sidecar.homepage } : {}),
+			...(sidecar.iconUrl ? { iconUrl: sidecar.iconUrl } : {}),
+			...(sidecar.changelog ? { changelog: sidecar.changelog } : {}),
+			...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
+		};
+
+		// A zip newer than every source file is already the current release —
+		// repackaging would only churn timestamps (and burn CI minutes).
+		if ((await Bun.file(zipPath).exists()) && (await stat(zipPath)).mtimeMs >= (await newestSourceMtime(sourceDir))) {
+			const zip = await readFile(zipPath);
+			catalogEntries.push({
+				...entryBase,
+				downloadUrl: `${BASE_URL}/plugins/${manifest.id}/${zipName}`,
+				checksum: `sha256-${createHash("sha256").update(zip).digest("hex")}`,
+				date: resolveEntryDate(previous, manifest.version),
+			});
+			console.log(`already packaged ${manifest.id}@${manifest.version} (sources unchanged)`);
+			continue;
+		}
+
+		const stagingDir = join(DIST_DIR, ".build", manifest.id);
+		await rm(stagingDir, { recursive: true, force: true });
+		await mkdir(stagingDir, { recursive: true });
 
 	const entrySource = join(sourceDir, manifest.entry);
 	if (await Bun.file(join(sourceDir, "package.json")).exists()) {
@@ -301,28 +353,20 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 	const uiDist = await resolveUiDist(sourceDir);
 	if (uiDist) await stageUiAssets(uiDist, stagingDir);
 
-	const zipName = `${manifest.id}-${manifest.version}.zip`;
 	const files: Record<string, Uint8Array> = {};
 	for await (const [path, bytes] of walk(stagingDir)) {
 		files[`${manifest.id}/${path.slice(stagingDir.length + 1).replaceAll("\\", "/")}`] = bytes;
 	}
 	const zip = zipSync(files);
 	const checksum = `sha256-${createHash("sha256").update(zip).digest("hex")}`;
-	await Bun.write(join(DIST_DIR, zipName), zip);
+	await mkdir(join(DIST_PLUGINS_DIR, manifest.id), { recursive: true });
+	await Bun.write(zipPath, zip);
 
 	catalogEntries.push({
-		id: manifest.id,
-		name: manifest.name,
-		version: manifest.version,
-		...(manifest.description ? { description: manifest.description } : {}),
-		category: sidecar.category ?? "other",
-		...(sidecar.homepage ? { homepage: sidecar.homepage } : {}),
-		...(sidecar.iconUrl ? { iconUrl: sidecar.iconUrl } : {}),
-		...(sidecar.changelog ? { changelog: sidecar.changelog } : {}),
-		downloadUrl: `${BASE_URL}/${zipName}`,
+		...entryBase,
+		downloadUrl: `${BASE_URL}/plugins/${manifest.id}/${zipName}`,
 		checksum,
 		date: resolveEntryDate(previous, manifest.version),
-		...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
 	});
 
 	console.log(`packaged ${manifest.id}@${manifest.version} → ${zipName} (${zip.byteLength} bytes)`);

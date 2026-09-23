@@ -1,6 +1,6 @@
 {
 	"name": "org.reelvault.requests",
-	"version": "1.1.1",
+	"version": "1.0.0",
 	"type": "module",
 	"devDependencies": {
 		"@reelvault/sdk": "^1.0.1",

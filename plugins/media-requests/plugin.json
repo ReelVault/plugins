@@ -1,7 +1,7 @@
 {
 	"id": "org.reelvault.requests",
 	"name": "Media Requests",
-	"version": "1.1.1",
+	"version": "1.0.0",
 	"description": "Users request missing movies and series; admins approve; users are notified automatically when a title lands in the library.",
 	"entry": "./index.ts",
 	"capabilities": ["httpRoute", "storage", "jobs", "eventHandler", "notification", "providerAccess", "mediaRead", "metadataRead"]

@@ -47,6 +47,11 @@ export function resolveEntryDate(previous: CatalogHistoryEntry | undefined, curr
 	return new Date().toISOString();
 }
 
+/** The public download URL of an archived release inside the dist folder layout. */
+export function archiveUrl(baseUrl: string, pluginId: string, version: string): string {
+	return `${baseUrl}/plugins/${pluginId}/${pluginId}-${version}.zip`;
+}
+
 /**
  * Builds the `versions[]` list (newest first) for a catalog entry. Sources, in
  * priority order: the previous catalog's latest entry, its recorded history,
@@ -78,7 +83,7 @@ export function buildVersionHistory(
 		const known = history.get(version);
 		const rebuilt: CatalogVersionEntry = {
 			version,
-			downloadUrl: `${baseUrl}/${pluginId}-${version}.zip`,
+			downloadUrl: archiveUrl(baseUrl, pluginId, version),
 			checksum,
 		};
 		if (known?.date !== undefined) rebuilt.date = known.date;
@@ -92,7 +97,7 @@ export function buildVersionHistory(
 function toVersionEntry(entry: CatalogHistoryEntry, pluginId: string, baseUrl: string): CatalogVersionEntry {
 	const version: CatalogVersionEntry = {
 		version: entry.version,
-		downloadUrl: `${baseUrl}/${pluginId}-${entry.version}.zip`,
+		downloadUrl: archiveUrl(baseUrl, pluginId, entry.version),
 		checksum: entry.checksum,
 	};
 	if (entry.date !== undefined) version.date = entry.date;

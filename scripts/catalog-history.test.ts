@@ -49,8 +49,8 @@ describe("buildVersionHistory", () => {
 		expect(history.map((entry) => entry.version)).toEqual(["1.1.0", "1.0.0", "0.9.0"]);
 		expect(history[0]?.date).toBe("2026-09-01T00:00:00.000Z");
 		expect(history[0]?.changelog).toBe("Middle release");
-		expect(history[0]?.downloadUrl).toBe(`${BASE_URL}/org.x-1.1.0.zip`);
-		expect(history[1]?.downloadUrl).toBe(`${BASE_URL}/org.x-1.0.0.zip`);
+		expect(history[0]?.downloadUrl).toBe(`${BASE_URL}/plugins/org.x/org.x-1.1.0.zip`);
+		expect(history[1]?.downloadUrl).toBe(`${BASE_URL}/plugins/org.x/org.x-1.0.0.zip`);
 		expect(history[1]?.date).toBe("2026-08-01T00:00:00.000Z");
 		expect(history[2]?.checksum).toBe(`sha256-${"9".repeat(64)}`);
 	});
@@ -83,6 +83,6 @@ describe("buildVersionHistory", () => {
 		expect(history).toHaveLength(1);
 		expect(history[0]?.changelog).toBe("Middle release");
 		expect(history[0]?.checksum).toBe(`sha256-${"2".repeat(64)}`);
-		expect(history[0]?.downloadUrl).toBe(`${BASE_URL}/org.x-1.1.0.zip`);
+		expect(history[0]?.downloadUrl).toBe(`${BASE_URL}/plugins/org.x/org.x-1.1.0.zip`);
 	});
 });

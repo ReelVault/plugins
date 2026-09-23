@@ -53,10 +53,15 @@ pnpm-debug.log*
 # ==================== #
 # BUILD OUTPUT
 # ==================== #
+# The root dist/ is the published catalog (zips + manifest) and IS committed;
+# only plugin-local build output and the build staging folder stay ignored.
 
-dist/
+/plugins/*/dist/
+/plugins/*/ui/dist/
+/plugins/*/build/
+/dist/.build/
+/dist/tsconfig.tsbuildinfo
 build/
-.build
 out/
 *.tsbuildinfo
 
