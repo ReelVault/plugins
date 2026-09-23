@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.webhooks",
+	"name": "Webhooks",
+	"version": "1.0.0",
+	"description": "Sends server event notifications (new media, playback start/stop) to Discord, Telegram or any JSON endpoint.",
+	"entry": "./index.ts",
+	"capabilities": ["httpRoute", "storage", "eventHandler", "httpFetch", "metadataRead"]
+}

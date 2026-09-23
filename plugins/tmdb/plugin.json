@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.tmdb",
+	"name": "TMDB Metadata Provider",
+	"version": "1.0.0",
+	"description": "Metadata provider backed by The Movie Database API.",
+	"entry": "./index.ts",
+	"capabilities": ["metadataProvider"]
+}

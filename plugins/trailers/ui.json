@@ -1,0 +1,35 @@
+{
+	"name": "Trailers",
+	"version": "1.0.0",
+	"defaultLocale": "en",
+	"pages": [
+		{
+			"id": "admin",
+			"path": "admin",
+			"name": { "en": "Trailers", "pl": "Zwiastuny" },
+			"icon": "Film",
+			"nav": "admin",
+			"adminOnly": true,
+			"schemaRef": "./dist/ui/schema-admin.json"
+		}
+	],
+	"dialogs": [
+		{
+			"id": "trailer",
+			"title": { "en": "Trailer", "pl": "Zwiastun" },
+			"icon": "Film",
+			"size": "xl",
+			"schemaRef": "./dist/ui/schema-trailer.json"
+		}
+	],
+	"slots": {
+		"details-action-bar": [
+			{
+				"label": { "en": "Watch trailer", "pl": "Obejrzyj zwiastun" },
+				"icon": "Film",
+				"priority": 20,
+				"action": { "type": "dialog", "dialog": "trailer" }
+			}
+		]
+	}
+}

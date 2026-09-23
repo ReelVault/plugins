@@ -1,0 +1,8 @@
+{
+	"name": "Cinemamode",
+	"version": "1.0.0",
+	"defaultLocale": "pl",
+	"playbackPreRoll": {
+		"endpoint": "/pre-roll"
+	}
+}

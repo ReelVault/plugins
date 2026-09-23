@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.community-markers",
+	"name": "Community Markers",
+	"version": "1.0.0",
+	"description": "Community-shared segment markers (intro, credits, recaps) with SponsorBlock-style upvote/downvote voting.",
+	"entry": "./index.ts",
+	"capabilities": ["httpRoute", "storage", "markers", "eventHandler", "mediaRead"]
+}

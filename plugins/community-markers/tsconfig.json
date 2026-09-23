@@ -1,0 +1,57 @@
+{
+	"compilerOptions": {
+		// Language and Environment
+		"target": "esnext",
+		"lib": ["ESNext", "DOM"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+
+		// Dist
+		"rootDir": ".",
+		"outDir": "./dist",
+
+		// Type Checking
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": false,
+		"noImplicitOverride": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+
+		// Emit
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		// "isolatedDeclarations": true,
+		"sourceMap": true,
+		"removeComments": false,
+		"importHelpers": false,
+		"preserveConstEnums": true,
+
+		// Interop Constraints
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"verbatimModuleSyntax": false,
+
+		// Skip Lib Check
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+
+		// Bun-specific
+		"types": ["@types/bun"],
+
+		// Paths
+		"paths": {
+			// Application paths
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": ["next-env.d.ts", "**/*.ts"],
+	"exclude": ["node_modules", "dist"]
+}

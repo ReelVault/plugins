@@ -1,0 +1,74 @@
+{
+	"name": "Media Requests",
+	"version": "1.1.1",
+	"defaultLocale": "en",
+	"entry": "./dist/ui/index.js",
+	"pages": [
+		{
+			"id": "discover",
+			"path": "discover",
+			"name": { "en": "Requests", "pl": "Prośby" },
+			"icon": "Sparkles",
+			"tag": "rv-requests-discover",
+			"nav": "user",
+			"priority": 10
+		},
+		{
+			"id": "requests",
+			"path": "requests",
+			"name": { "en": "My requests", "pl": "Moje prośby" },
+			"icon": "Send",
+			"tag": "rv-requests-list",
+			"nav": "user",
+			"priority": 20
+		},
+		{
+			"id": "admin",
+			"path": "admin",
+			"name": { "en": "Media requests", "pl": "Prośby o media" },
+			"icon": "Shield",
+			"tag": "rv-requests-admin",
+			"nav": "admin",
+			"adminOnly": true
+		},
+		{
+			"id": "detail",
+			"path": "detail",
+			"name": { "en": "Details", "pl": "Szczegóły" },
+			"icon": "Film",
+			"tag": "rv-requests-detail",
+			"nav": false
+		}
+	],
+	"dialogs": [
+		{
+			"id": "detail",
+			"title": { "en": "Details", "pl": "Szczegóły" },
+			"icon": "Film",
+			"size": "lg",
+			"tag": "rv-requests-detail"
+		}
+	],
+	"searchProvider": {
+		"endpoint": "/search",
+		"requestEndpoint": "/requests",
+		"itemPage": "detail"
+	},
+	"slots": {
+		"navbar-profile-menu": [
+			{
+				"label": { "en": "Requests", "pl": "Prośby" },
+				"icon": "Sparkles",
+				"priority": 10,
+				"action": { "type": "page", "page": "discover" }
+			}
+		],
+		"dashboard-section": [
+			{
+				"label": { "en": "Coming soon to your library", "pl": "Wkrótce w bibliotece" },
+				"priority": 70,
+				"element": { "tag": "rv-requests-dashboard" }
+			}
+		]
+	}
+}

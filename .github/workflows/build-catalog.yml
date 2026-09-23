@@ -1,0 +1,50 @@
+name: Build catalog
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Package plugins + catalog manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # build-catalog links node_modules/reelvault-sdk onto these SDK sources —
+      # schema modules import the UI vocabulary from it during the build.
+      - name: Check out the server SDK sources
+        uses: actions/checkout@v4
+        with:
+          repository: ReelVault/ReelVault.Server
+          ref: main
+          path: server
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "latest"
+      # The SDK shim points at server/sdk, whose exports resolve into the
+      # tsdown-built dist/ — git-ignored, so it must be produced here.
+      - name: Build the server SDK
+        run: cd server && bun install --frozen-lockfile && bun run build-sdk
+      - run: bun install --frozen-lockfile
+      - run: bun run build-catalog
+        env:
+          # Derive the raw URL from the actual repository — a hardcoded name
+          # stranded the published download URLs when the repo was renamed.
+          CATALOG_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/dist
+      - name: Commit generated catalog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # dist/ is git-ignored for local builds; force-add only the published
+          # catalog artifacts so the raw.githubusercontent.com URLs resolve.
+          git add -f dist/reelvault-catalog.json dist/*.zip
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "chore: rebuild catalog manifest"
+            git push
+          fi

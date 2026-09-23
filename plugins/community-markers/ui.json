@@ -1,0 +1,37 @@
+{
+	"name": "Community Markers",
+	"version": "1.0.0",
+	"defaultLocale": "en",
+	"entry": "./dist/ui/index.js",
+	"pages": [
+		{
+			"id": "admin",
+			"path": "admin",
+			"name": { "en": "Community markers", "pl": "Markery społeczności" },
+			"icon": "Shield",
+			"tag": "rv-community-markers-admin",
+			"nav": "admin",
+			"adminOnly": true
+		}
+	],
+	"dialogs": [
+		{
+			"id": "markers",
+			"title": { "en": "Community markers", "pl": "Markery społeczności" },
+			"icon": "Shield",
+			"size": "lg",
+			"tag": "rv-community-markers-dialog"
+		}
+	],
+	"slots": {
+		"player-footer": [
+			{
+				"label": { "en": "Markers", "pl": "Markery" },
+				"icon": "Shield",
+				"priority": 30,
+				"iconOnly": true,
+				"action": { "type": "dialog", "dialog": "markers" }
+			}
+		]
+	}
+}

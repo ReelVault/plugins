@@ -1,0 +1,35 @@
+{
+	"name": "Bug Reports",
+	"version": "1.0.0",
+	"defaultLocale": "en",
+	"pages": [
+		{
+			"id": "admin",
+			"path": "admin",
+			"name": { "en": "Bug reports", "pl": "Zgłoszenia błędów" },
+			"icon": "Shield",
+			"nav": "admin",
+			"adminOnly": true,
+			"schemaRef": "./dist/ui/schema-admin.json"
+		}
+	],
+	"dialogs": [
+		{
+			"id": "report",
+			"title": { "en": "Report a bug", "pl": "Zgłoś błąd" },
+			"icon": "Bug",
+			"size": "lg",
+			"schemaRef": "./dist/ui/schema-report.json"
+		}
+	],
+	"slots": {
+		"root-floating-overlay": [
+			{
+				"label": { "en": "Report a bug", "pl": "Zgłoś błąd" },
+				"icon": "Bug",
+				"priority": 100,
+				"action": { "type": "dialog", "dialog": "report" }
+			}
+		]
+	}
+}

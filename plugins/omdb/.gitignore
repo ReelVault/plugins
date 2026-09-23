@@ -1,0 +1,95 @@
+# ==================== #
+# OPERATING SYSTEM
+# ==================== #
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==================== #
+# RUNTIME & PACKAGE MANAGER
+# ==================== #
+
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lock*
+
+# ==================== #
+# LOCAL DATA
+# ==================== #
+
+# ENVIRONMENT
+.env
+.env.*
+!.env.example
+
+# Database
+*.db*
+*.sqlite*
+
+# ==================== #
+# LOGS
+# ==================== #
+
+*.log
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Linux
+.directory
+
+# ==================== #
+# FRAMEWORK
+# ==================== #
+
+# TypeScript
+dist
+.build
+*.tsbuildinfo
+
+# Next.js & Vercel
+.vercel
+.next
+out
+
+# Husky
+.husky
+
+# ==================== #
+# MISC
+# ==================== #
+
+.VSCodeCounter
+
+# Logs
+*.log
+repomix-output*
+
+# Testing
+coverage
+.nyc_output
+jest-cache
+
+# ==================== #
+# PROJECT SPECIFIC
+# ==================== #
+packages/*/dist
+packages/*/build
+packages/*/.build
+out/

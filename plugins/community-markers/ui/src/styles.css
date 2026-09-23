@@ -1,0 +1,393 @@
+/* Shared plugin-UI styles. Shadow DOM inherits the host's CSS custom properties,
+   so the plugin matches the app theme (light/dark) with no JS bridge. */
+:host {
+	display: block;
+	color: var(--foreground);
+	font-family: inherit;
+	font-size: 0.875rem;
+	line-height: 1.4;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	max-width: 1000px;
+	margin: 0 auto;
+	padding: 1.25rem;
+	color: var(--foreground);
+}
+
+.panel {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 1rem;
+}
+
+h1,
+h2 {
+	margin: 0 0 0.6rem;
+	font-size: 1.05rem;
+	font-weight: 600;
+	color: var(--foreground);
+}
+
+.stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+	gap: 0.6rem;
+}
+
+.stat {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.6rem 0.75rem;
+}
+
+.stat b {
+	display: block;
+	font-size: 1.35rem;
+}
+
+.stat span {
+	font-size: 0.75rem;
+	color: var(--muted-foreground);
+}
+
+.row {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.grid2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.6rem;
+}
+
+label {
+	display: block;
+	font-size: 0.78rem;
+	color: var(--muted-foreground);
+	margin: 0.5rem 0 0.2rem;
+}
+
+input,
+select,
+textarea {
+	width: 100%;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid var(--input);
+	border-radius: calc(var(--radius) - 0.15rem);
+	background: var(--background);
+	color: var(--foreground);
+	font: inherit;
+}
+
+textarea {
+	min-height: 4rem;
+	resize: vertical;
+}
+
+button {
+	font: inherit;
+	padding: 0.45rem 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: calc(var(--radius) - 0.15rem);
+	background: var(--card);
+	color: var(--foreground);
+	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+}
+
+button:hover {
+	background: var(--accent);
+}
+
+button.primary {
+	background: var(--primary);
+	border-color: var(--primary);
+	color: var(--primary-foreground);
+}
+
+button.danger {
+	color: var(--destructive);
+	border-color: var(--destructive);
+}
+
+button.success {
+	color: var(--primary);
+	border-color: var(--primary);
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.badge {
+	display: inline-block;
+	padding: 0.1rem 0.4rem;
+	border-radius: 999px;
+	border: 1px solid var(--border);
+	font-size: 0.7rem;
+	text-transform: capitalize;
+	color: var(--muted-foreground);
+}
+
+.badge.approved,
+.badge.available,
+.badge.ok,
+.badge.official {
+	border-color: var(--primary);
+	color: var(--primary);
+}
+
+.badge.pending {
+	border-color: #d97706;
+	color: #d97706;
+}
+
+.badge.rejected {
+	border-color: var(--destructive);
+	color: var(--destructive);
+}
+
+.badge.off {
+	color: var(--muted-foreground);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.seg,
+.req {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.6rem;
+	border: 1px solid var(--border);
+	border-radius: calc(var(--radius) - 0.1rem);
+	background: var(--card);
+	margin-bottom: 0.5rem;
+}
+
+.seg-main,
+.req-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.votes {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.votes button {
+	padding: 0.25rem 0.5rem;
+}
+
+.votes button.on {
+	border-color: var(--primary);
+	color: var(--primary);
+}
+
+.empty {
+	border: 1px dashed var(--border);
+	border-radius: var(--radius);
+	padding: 1.5rem;
+	text-align: center;
+	color: var(--muted-foreground);
+}
+
+.tabs {
+	display: flex;
+	gap: 0.25rem;
+	border-bottom: 1px solid var(--border);
+	margin-bottom: 0.75rem;
+}
+
+.tabs button {
+	border: 0;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	background: transparent;
+	color: var(--muted-foreground);
+}
+
+.tabs button.active {
+	color: var(--foreground);
+	border-bottom-color: var(--primary);
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+th,
+td {
+	text-align: left;
+	padding: 0.5rem;
+	border-bottom: 1px solid var(--border);
+}
+
+tr.clickable {
+	cursor: pointer;
+}
+
+tr.clickable:hover {
+	background: var(--accent);
+}
+
+.error {
+	color: var(--destructive);
+	font-size: 0.82rem;
+}
+
+.muted {
+	color: var(--muted-foreground);
+	font-size: 0.78rem;
+}
+
+/* Dialog surfaces (trailers) */
+.frame {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 50vh;
+	color: var(--foreground);
+}
+
+.frame-head {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.25rem 0.75rem;
+}
+
+.frame-head h1 {
+	margin: 0;
+	font-size: 1rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.video {
+	flex: 1;
+	width: 100%;
+	min-height: 320px;
+	border: 0;
+	background: #000;
+	border-radius: var(--radius);
+}
+
+.inline-frame {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 0;
+	background: #000;
+	border-radius: var(--radius);
+}
+
+.center {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+	text-align: center;
+	padding: 2rem;
+	color: var(--muted-foreground);
+}
+
+.center strong {
+	color: var(--foreground);
+}
+
+/* Webhooks delivery log */
+.log {
+	display: flex;
+	flex-direction: column;
+}
+
+.log-item {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var(--border);
+	font-size: 0.85rem;
+}
+
+.log-item:last-child {
+	border-bottom: 0;
+}
+
+.log-title {
+	font-weight: 600;
+}
+
+.events {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	font-size: 0.85rem;
+}
+
+.events .on {
+	color: var(--foreground);
+}
+
+.events .off {
+	color: var(--muted-foreground);
+}
+
+/* Dialog forms */
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.form .actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.link {
+	align-self: flex-start;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--primary);
+	cursor: pointer;
+}
+
+.link:hover {
+	background: transparent;
+	text-decoration: underline;
+}

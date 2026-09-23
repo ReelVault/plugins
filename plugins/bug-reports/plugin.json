@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.bug-reports",
+	"name": "Bug Reports",
+	"version": "1.0.0",
+	"description": "User-facing bug reporting for playback, metadata and UI problems, with an admin management panel and notifications.",
+	"entry": "./index.ts",
+	"capabilities": ["httpRoute", "storage", "jobs", "notification"]
+}

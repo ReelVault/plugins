@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.trailers",
+	"name": "Trailers",
+	"version": "1.0.0",
+	"description": "On-demand YouTube trailer search and playback for movies and series.",
+	"entry": "./index.ts",
+	"capabilities": ["httpRoute", "storage", "httpFetch", "metadataRead"]
+}

@@ -1,0 +1,16 @@
+{
+	"name": "Webhooks",
+	"version": "1.0.0",
+	"defaultLocale": "en",
+	"pages": [
+		{
+			"id": "admin",
+			"path": "admin",
+			"name": { "en": "Webhooks", "pl": "Webhooki" },
+			"icon": "Bell",
+			"nav": "admin",
+			"adminOnly": true,
+			"schemaRef": "./dist/ui/schema-admin.json"
+		}
+	]
+}

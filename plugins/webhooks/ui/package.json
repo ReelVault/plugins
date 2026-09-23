@@ -1,0 +1,9 @@
+{
+	"name": "org.reelvault.webhooks-ui",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"devDependencies": {
+		"typescript": "^7.0.2"
+	}
+}
