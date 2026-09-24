@@ -51,7 +51,7 @@
 				"mediaRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.community-markers/org.reelvault.community-markers-1.0.0.zip",
-			"checksum": "sha256-2247f884153211fa33901e1f956c23b3e579cb52045c19d9720b828c7bc410a3",
+			"checksum": "sha256-1f61b37664b7840980e6822ea3f7f207c76ebcc06a30c007ee99ed8a9960e0e4",
 			"date": "2026-09-23T19:32:17.484Z"
 		},
 		{
@@ -84,7 +84,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.0.zip",
-			"checksum": "sha256-d78f0ddc5eacfbc691324f7b61100ff4103df695e316910911a5da225c2e9bb8",
+			"checksum": "sha256-1c91e8bbff6c2e071a5baa4d3f0e7402dfe37040861ec434d633c8d2f278d819",
 			"date": "2026-09-23T19:32:17.483Z"
 		},
 		{

@@ -21,10 +21,7 @@ const PLUGINS_DIR = join(ROOT, "plugins");
 const DIST_DIR = join(ROOT, "dist");
 const DIST_PLUGINS_DIR = join(DIST_DIR, "plugins");
 const CATALOG_FILE_NAME = "reelvault-catalog.json";
-const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/plugins/main/dist").replace(
-	/\/$/,
-	"",
-);
+const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/plugins/main/dist").replace(/\/$/, "");
 const SCHEMA_FILE_PATTERN = /^schema(-[a-z0-9]+)?\.ts$/;
 const TYPESCRIPT_EXTENSION_PATTERN = /\.ts$/;
 
@@ -284,45 +281,45 @@ async function stageUiAssets(sourceDist: string, stagingDir: string): Promise<vo
 const catalogEntries: CatalogEntry[] = [];
 const previousEntries = await readPreviousEntries();
 
-	for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true }))
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => entry.name)) {
-		const sourceDir = join(PLUGINS_DIR, pluginDirName);
-		const manifest = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
-		const sidecar = await readCatalogSidecar(join(sourceDir, "catalog.json"));
-		const previous = previousEntries.find((candidate) => candidate.id === manifest.id);
+for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true }))
+	.filter((entry) => entry.isDirectory())
+	.map((entry) => entry.name)) {
+	const sourceDir = join(PLUGINS_DIR, pluginDirName);
+	const manifest = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
+	const sidecar = await readCatalogSidecar(join(sourceDir, "catalog.json"));
+	const previous = previousEntries.find((candidate) => candidate.id === manifest.id);
 
-		const zipName = `${manifest.id}-${manifest.version}.zip`;
-		const zipPath = join(DIST_PLUGINS_DIR, manifest.id, zipName);
-		const entryBase = {
-			id: manifest.id,
-			name: manifest.name,
-			version: manifest.version,
-			...(manifest.description ? { description: manifest.description } : {}),
-			category: sidecar.category ?? "other",
-			...(sidecar.homepage ? { homepage: sidecar.homepage } : {}),
-			...(sidecar.iconUrl ? { iconUrl: sidecar.iconUrl } : {}),
-			...(sidecar.changelog ? { changelog: sidecar.changelog } : {}),
-			...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
-		};
+	const zipName = `${manifest.id}-${manifest.version}.zip`;
+	const zipPath = join(DIST_PLUGINS_DIR, manifest.id, zipName);
+	const entryBase = {
+		id: manifest.id,
+		name: manifest.name,
+		version: manifest.version,
+		...(manifest.description ? { description: manifest.description } : {}),
+		category: sidecar.category ?? "other",
+		...(sidecar.homepage ? { homepage: sidecar.homepage } : {}),
+		...(sidecar.iconUrl ? { iconUrl: sidecar.iconUrl } : {}),
+		...(sidecar.changelog ? { changelog: sidecar.changelog } : {}),
+		...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
+	};
 
-		// A zip newer than every source file is already the current release —
-		// repackaging would only churn timestamps (and burn CI minutes).
-		if ((await Bun.file(zipPath).exists()) && (await stat(zipPath)).mtimeMs >= (await newestSourceMtime(sourceDir))) {
-			const zip = await readFile(zipPath);
-			catalogEntries.push({
-				...entryBase,
-				downloadUrl: `${BASE_URL}/plugins/${manifest.id}/${zipName}`,
-				checksum: `sha256-${createHash("sha256").update(zip).digest("hex")}`,
-				date: resolveEntryDate(previous, manifest.version),
-			});
-			console.log(`already packaged ${manifest.id}@${manifest.version} (sources unchanged)`);
-			continue;
-		}
+	// A zip newer than every source file is already the current release —
+	// repackaging would only churn timestamps (and burn CI minutes).
+	if ((await Bun.file(zipPath).exists()) && (await stat(zipPath)).mtimeMs >= (await newestSourceMtime(sourceDir))) {
+		const zip = await readFile(zipPath);
+		catalogEntries.push({
+			...entryBase,
+			downloadUrl: `${BASE_URL}/plugins/${manifest.id}/${zipName}`,
+			checksum: `sha256-${createHash("sha256").update(zip).digest("hex")}`,
+			date: resolveEntryDate(previous, manifest.version),
+		});
+		console.log(`already packaged ${manifest.id}@${manifest.version} (sources unchanged)`);
+		continue;
+	}
 
-		const stagingDir = join(DIST_DIR, ".build", manifest.id);
-		await rm(stagingDir, { recursive: true, force: true });
-		await mkdir(stagingDir, { recursive: true });
+	const stagingDir = join(DIST_DIR, ".build", manifest.id);
+	await rm(stagingDir, { recursive: true, force: true });
+	await mkdir(stagingDir, { recursive: true });
 
 	const entrySource = join(sourceDir, manifest.entry);
 	if (await Bun.file(join(sourceDir, "package.json")).exists()) {

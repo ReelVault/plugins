@@ -1,5 +1,5 @@
-import { createContext, type ReactNode, useContext } from "react";
 import type { PluginUiHost } from "@reelvault/sdk/ui";
+import { createContext, type ReactNode, useContext } from "react";
 
 const HostContext = createContext<PluginUiHost | null>(null);
 

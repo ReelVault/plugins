@@ -1,6 +1,6 @@
+import { definePluginElement, mountShadow, type PluginUiHost } from "@reelvault/sdk/ui";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { definePluginElement, mountShadow, type PluginUiHost } from "@reelvault/sdk/ui";
 import { CommunityMarkersAdmin } from "./admin";
 import { PluginHostProvider } from "./host-context";
 import { CommunityMarkersDialog } from "./markers";
