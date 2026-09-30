@@ -1,7 +1,7 @@
 {
 	"id": "org.reelvault.cinemamode",
 	"name": "Cinemamode",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Cinema at home — plays random trailers of similar titles from your library before a movie starts.",
 	"entry": "./index.ts",
 	"capabilities": ["httpRoute", "storage", "providerAccess", "mediaRead", "metadataRead"]

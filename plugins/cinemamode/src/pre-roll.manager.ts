@@ -63,7 +63,11 @@ export class PreRollManager {
 
 		const cacheKey = `${CACHE_PREFIX}${mediaFileId}`;
 		const entries = await this.buildEntries(source);
-		await this.host.storage.set(cacheKey, { cachedAt: new Date().toISOString(), entries });
+		// An empty selection is usually a transient state (library not scanned yet,
+		// provider hiccup) — caching it would pin the empty queue for a full TTL.
+		if (entries.length > 0) {
+			await this.host.storage.set(cacheKey, { cachedAt: new Date().toISOString(), entries });
+		}
 		return { entries };
 	}
 

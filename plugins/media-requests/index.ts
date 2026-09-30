@@ -147,6 +147,7 @@ export default definePlugin(config, {
 					genreId: nonEmpty(query.genreId),
 					year: parseOptionalPositiveInt(query.year),
 					providerId: nonEmpty(query.providerId),
+					externalId: nonEmpty(query.externalId),
 				});
 
 				return { body: result };

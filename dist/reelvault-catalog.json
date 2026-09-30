@@ -21,7 +21,7 @@
 		{
 			"id": "org.reelvault.cinemamode",
 			"name": "Cinemamode",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Cinema at home — plays random trailers of similar titles from your library before a movie starts.",
 			"category": "integrations",
 			"homepage": "https://github.com/ReelVault/plugins",
@@ -33,9 +33,18 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.0.zip",
-			"checksum": "sha256-592e31d94f02a54a572d631ed7cd7fb6e6042a07db40b72a42efc61fcca70788",
-			"date": "2026-09-23T19:32:17.485Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.1.zip",
+			"checksum": "sha256-ed59fe98e843e535532380b8424fc79d460d861323ad5f83ad12e3804e89c397",
+			"date": "2026-09-30T09:37:12.164Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.0.zip",
+					"checksum": "sha256-592e31d94f02a54a572d631ed7cd7fb6e6042a07db40b72a42efc61fcca70788",
+					"date": "2026-09-23T19:32:17.485Z",
+					"changelog": "First release — plays trailers before the feature."
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.community-markers",
@@ -70,7 +79,7 @@
 		{
 			"id": "org.reelvault.requests",
 			"name": "Media Requests",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Users request missing movies and series; admins approve; users are notified automatically when a title lands in the library.",
 			"category": "automation",
 			"capabilities": [
@@ -83,9 +92,17 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.0.zip",
-			"checksum": "sha256-1c91e8bbff6c2e071a5baa4d3f0e7402dfe37040861ec434d633c8d2f278d819",
-			"date": "2026-09-23T19:32:17.483Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.1.zip",
+			"checksum": "sha256-ada1a6d6c202c7343c59a3b44950c597ec9f67851095bebdffcd62bcdfb30ca1",
+			"date": "2026-09-30T09:37:12.155Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.0.zip",
+					"checksum": "sha256-1c91e8bbff6c2e071a5baa4d3f0e7402dfe37040861ec434d633c8d2f278d819",
+					"date": "2026-09-23T19:32:17.483Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.tmdb",

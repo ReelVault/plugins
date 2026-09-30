@@ -18,6 +18,7 @@ export interface DiscoveryQuery {
 	genreId?: string;
 	year?: number;
 	providerId?: string;
+	externalId?: string;
 }
 
 /**
@@ -51,6 +52,7 @@ export class ProviderAccess {
 				genreId: query.genreId,
 				year: query.year,
 				providerId: query.providerId,
+				externalId: query.externalId,
 			});
 		} catch (error) {
 			this.host.logger.warn("Metadata discovery unavailable", { category: query.category, error });
