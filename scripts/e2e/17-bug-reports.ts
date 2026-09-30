@@ -173,9 +173,11 @@ async function main(): Promise<void> {
 	await suite.case("admin notification about new report arrived", async (s) => {
 		const response = await userA.post<ReportResponse>(`${base}/reports`, { title: "Notify probe", category: "ui" });
 		s.expect(response.status === 201, `notify probe create -> ${response.status}`);
-		const notifications = await userA.get<{ items?: { title: string }[]; data?: { items?: { title: string }[] } }>("/v1/notifications");
+		const notifications = await userA.get<{ items?: Array<{ title: string }>; data?: { items?: Array<{ title: string }> } }>(
+			"/v1/notifications",
+		);
 		const items = Array.isArray(notifications.body)
-			? (notifications.body as { title: string }[])
+			? (notifications.body as Array<{ title: string }>)
 			: (notifications.body.items ?? notifications.body.data?.items ?? []);
 		s.expect(
 			items.some((item) => (item.title ?? "").includes("Notify probe")),

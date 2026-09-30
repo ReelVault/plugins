@@ -8,7 +8,7 @@ import { MOVIES_DIR, readState, STAGING_DIR } from "./lib/state";
 const suite = new Suite("13-cinemamode");
 
 interface PreRoll {
-	entries?: { key?: string; youtubeKey?: string }[];
+	entries?: Array<{ key?: string; youtubeKey?: string }>;
 	enabled?: boolean;
 	config?: { enabled: boolean; trailerCount: number; libraryOnly: boolean };
 }
@@ -28,7 +28,7 @@ async function ensureMatchedLibraryFile(admin: Api, filename: string, title: str
 	}
 	return await expectWait(
 		async () => {
-			const response = await admin.get<{ data?: { id: string; metadataId?: string | null; fileName?: string }[] }>("/v1/media-files", {
+			const response = await admin.get<{ data?: Array<{ id: string; metadataId?: string | null; fileName?: string }> }>("/v1/media-files", {
 				query: { libraryId, pageSize: 100 },
 			});
 			const items = Array.isArray(response.body) ? response.body : (response.body.data ?? []);
@@ -49,9 +49,9 @@ async function main(): Promise<void> {
 	const userA = new Api().withCookie(state.userACookie);
 
 	const anchorId = await suite.case("Matrix + Reloaded matched in library (pre-roll needs real pair)", async (s) => {
-		const anchor = await ensureMatchedLibraryFile(admin, ANCHOR, ANCHOR_TITLE, state.moviesLibraryId as string);
+		const anchor = await ensureMatchedLibraryFile(admin, ANCHOR, ANCHOR_TITLE, state.moviesLibraryId);
 		s.expect(Boolean(anchor), `${ANCHOR_TITLE} not matched in library`);
-		const pair = await ensureMatchedLibraryFile(admin, PAIR, PAIR_TITLE, state.moviesLibraryId as string);
+		const pair = await ensureMatchedLibraryFile(admin, PAIR, PAIR_TITLE, state.moviesLibraryId);
 		s.expect(Boolean(pair), `${PAIR_TITLE} not matched in library (TMDB rec/similar pair may have changed)`);
 		return anchor as string;
 	});

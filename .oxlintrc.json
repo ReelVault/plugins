@@ -317,6 +317,32 @@
 			"rules": {
 				"react/set-state-in-effect": "off"
 			}
+		},
+		{
+			"files": ["scripts/e2e/**"],
+			"rules": {
+				"typescript/no-unsafe-assignment": "off",
+				"typescript/no-non-null-assertion": "off",
+				"typescript/no-unsafe-type-assertion": "off",
+				"typescript/no-unsafe-argument": "off",
+				"typescript/no-unsafe-member-access": "off",
+				"typescript/no-unsafe-return": "off",
+				"typescript/no-unsafe-call": "off",
+				"typescript/require-await": "off",
+				"typescript/promise-function-async": "off",
+				"typescript/return-await": "off",
+				"typescript/no-unnecessary-condition": "off",
+				"typescript/restrict-template-expressions": "off",
+				"typescript/no-unnecessary-type-conversion": "off",
+				"typescript/no-unnecessary-type-arguments": "off",
+				"typescript/await-thenable": "off",
+				"typescript/unbound-method": "off",
+				"unicorn/consistent-function-scoping": "off",
+				"unicorn/no-useless-undefined": "off",
+				"unicorn/no-array-callback-reference": "off",
+				"eslint/no-shadow": "off",
+				"promise/prefer-await-to-then": "off"
+			}
 		}
 	]
 }

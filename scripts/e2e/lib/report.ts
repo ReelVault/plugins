@@ -51,6 +51,8 @@ export class Suite {
 			this.results.push({ suite: this.name, name, status: "fail", detail, ms: Date.now() - started });
 			console.log(`  FAIL  ${name}\n        ${detail}`);
 		}
+
+		return undefined;
 	}
 
 	finish(): void {
@@ -74,6 +76,6 @@ export function ensure<T>(value: T | null | undefined, message: string): T {
 	return value;
 }
 
-export function requireKeys(...values: (string | undefined)[]): string | undefined {
+export function requireKeys(...values: Array<string | undefined>): string | undefined {
 	return values.every((value) => value && value.length > 0) ? values[0] : undefined;
 }

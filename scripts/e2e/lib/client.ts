@@ -26,13 +26,43 @@ const OPTION_KEYS = ["query", "body", "headers", "cookie", "form"] as const;
 
 function resolveOptions(method: string, arg: RequestOptions | object | undefined): RequestOptions {
 	if (arg === undefined || arg === null) return {};
-	if (OPTION_KEYS.some((key) => key in arg)) return arg as RequestOptions;
+	if (OPTION_KEYS.some((key) => key in arg)) return arg;
 	if (method === "GET") return { query: arg as RequestOptions["query"] };
 	return { body: arg };
 }
 
+export class PluginApi {
+	private readonly api: Api;
+	private readonly pluginId: string;
+
+	constructor(api: Api, pluginId: string) {
+		this.api = api;
+		this.pluginId = pluginId;
+	}
+
+	private path(sub: string): string {
+		return `/v1/plugins/${this.pluginId}${sub}`;
+	}
+
+	get<T>(sub = "/", query?: Record<string, string | number | boolean | undefined>, cookie?: string): Promise<ApiResponse<T>> {
+		return this.api.get<T>(this.path(sub), { query, cookie });
+	}
+
+	post<T>(sub = "/", body?: unknown, cookie?: string): Promise<ApiResponse<T>> {
+		return this.api.post<T>(this.path(sub), { body, cookie });
+	}
+
+	patch<T>(sub: string, body?: unknown, cookie?: string): Promise<ApiResponse<T>> {
+		return this.api.patch<T>(this.path(sub), { body, cookie });
+	}
+
+	delete<T>(sub = "/", cookie?: string): Promise<ApiResponse<T>> {
+		return this.api.delete<T>(this.path(sub), { cookie });
+	}
+}
+
 export class Api {
-	private cookie?: string;
+	private readonly cookie?: string;
 
 	constructor(cookie?: string) {
 		this.cookie = cookie;
@@ -71,7 +101,7 @@ export class Api {
 		for (const [key, value] of Object.entries(options.query ?? {})) {
 			if (value !== undefined) url.searchParams.set(key, String(value));
 		}
-		const headers: Record<string, string> = { ...(options.headers ?? {}) };
+		const headers: Record<string, string> = { ...options.headers };
 		const cookie = options.cookie ?? this.cookie;
 		if (cookie) headers.cookie = cookie;
 		let body: string | FormData | undefined;
@@ -119,37 +149,12 @@ export class Api {
 	}
 }
 
-export class PluginApi {
-	private readonly api: Api;
-	private readonly pluginId: string;
-
-	constructor(api: Api, pluginId: string) {
-		this.api = api;
-		this.pluginId = pluginId;
-	}
-
-	private path(sub: string): string {
-		return `/v1/plugins/${this.pluginId}${sub}`;
-	}
-
-	get<T>(sub = "/", query?: Record<string, string | number | boolean | undefined>, cookie?: string): Promise<ApiResponse<T>> {
-		return this.api.get<T>(this.path(sub), { query, cookie });
-	}
-
-	post<T>(sub = "/", body?: unknown, cookie?: string): Promise<ApiResponse<T>> {
-		return this.api.post<T>(this.path(sub), { body, cookie });
-	}
-
-	patch<T>(sub: string, body?: unknown, cookie?: string): Promise<ApiResponse<T>> {
-		return this.api.patch<T>(this.path(sub), { body, cookie });
-	}
-
-	delete<T>(sub = "/", cookie?: string): Promise<ApiResponse<T>> {
-		return this.api.delete<T>(this.path(sub), { cookie });
-	}
-}
-
-export async function expectWait<T>(fn: () => Promise<T | null>, label: string, timeoutMs = 30_000, intervalMs = 500): Promise<T> {
+export async function expectWait<T>(
+	fn: () => T | null | Promise<T | null>,
+	label: string,
+	timeoutMs = 30_000,
+	intervalMs = 500,
+): Promise<T> {
 	const deadline = Date.now() + timeoutMs;
 	let last: T | null = null;
 	while (Date.now() < deadline) {

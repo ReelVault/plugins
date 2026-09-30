@@ -83,7 +83,7 @@ async function main(): Promise<void> {
 		await Bun.sleep(400);
 		const sent = await admin.post<object>(`${base}/test`);
 		s.expect(sent.status === 200 || sent.status === 502, `test with broken discord -> ${sent.status}`);
-		const plugins = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins", { cookie: state.adminCookie });
+		const plugins = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie: state.adminCookie });
 		s.expect(plugins.body.find((plugin) => plugin.id === "org.reelvault.webhooks")?.state === "enabled", "webhooks plugin degraded");
 	});
 

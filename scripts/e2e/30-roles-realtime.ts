@@ -75,7 +75,7 @@ async function main(): Promise<void> {
 			const approved = await admin.patch(`/v1/plugins/org.reelvault.requests/requests/${requestId}`, { body: { status: "approved" } });
 			s.expect(approved.status === 200, `approve -> ${approved.status}`);
 			const seen = await expectWait(
-				async () => {
+				() => {
 					const hit = messages.find((message) => message.includes("requests.changed"));
 					return hit ?? null;
 				},

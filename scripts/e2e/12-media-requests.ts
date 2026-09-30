@@ -25,7 +25,7 @@ interface Details {
 	metadataId?: string;
 }
 interface Discovery {
-	items?: { externalId: string; title: string }[];
+	items?: Array<{ externalId: string; title: string }>;
 	unsupported?: boolean;
 }
 
@@ -52,7 +52,7 @@ async function main(): Promise<void> {
 	await cleanupStaleRequests(admin);
 
 	await suite.case("providers endpoint lists discovery-capable provider", async (s) => {
-		const response = await userA.get<{ providers?: { id: string }[] }>(`${base}/providers`);
+		const response = await userA.get<{ providers?: Array<{ id: string }> }>(`${base}/providers`);
 		s.expect(response.status === 200, `GET /providers -> ${response.status}`);
 		s.expect(
 			(response.body.providers ?? []).some((provider) => provider.id === "tmdb"),
@@ -92,7 +92,7 @@ async function main(): Promise<void> {
 	});
 
 	await suite.case("genres and genre tiles", async (s) => {
-		const genres = await userA.get<{ genres?: { id: string; name: string }[] }>(`${base}/genres`, { query: { mediaType: "movie" } });
+		const genres = await userA.get<{ genres?: Array<{ id: string; name: string }> }>(`${base}/genres`, { query: { mediaType: "movie" } });
 		s.expect(genres.status === 200 && (genres.body.genres ?? []).length > 0, `genres -> ${genres.status}`);
 		const tiles = await userA.get<{ tiles?: unknown[] }>(`${base}/genre-tiles`, { query: { mediaType: "movie" } });
 		s.expect(tiles.status === 200, `genre-tiles -> ${tiles.status}`);
@@ -185,12 +185,14 @@ async function main(): Promise<void> {
 
 	await suite.case("admin cannot set unknown status", async (s) => {
 		const requestId = await findRequestId(admin, FULFIL_TITLE);
-		const response = await admin.patch<{ error?: string; success?: boolean; request?: Request }>(`${base}/requests/${requestId}`, { status: "grant-wishes" });
+		const response = await admin.patch<{ error?: string; success?: boolean; request?: Request }>(`${base}/requests/${requestId}`, {
+			status: "grant-wishes",
+		});
 		s.expect(Boolean(response.body.error), "invalid status accepted without error");
 	});
 
 	await suite.case("coming-soon lists approved request", async (s) => {
-		const response = await userA.get<{ items?: { title: string }[] }>(`${base}/coming-soon`);
+		const response = await userA.get<{ items?: Array<{ title: string }> }>(`${base}/coming-soon`);
 		s.expect(response.status === 200, `coming-soon -> ${response.status}`);
 		s.expect(
 			(response.body.items ?? []).some((item) => item.title.includes(FULFIL_TITLE)),
@@ -225,7 +227,7 @@ async function main(): Promise<void> {
 	await suite.case("available request produces user notification", async (s) => {
 		const notification = await expectWait(
 			async () => {
-				const response = await userA.get<{ items?: { title?: string; message?: string }[] }>("/v1/notifications");
+				const response = await userA.get<{ items?: Array<{ title?: string; message?: string }> }>("/v1/notifications");
 				const items = Array.isArray(response.body) ? response.body : (response.body.items ?? []);
 				return items.find((item) => `${item.title ?? ""} ${item.message ?? ""}`.toLowerCase().includes(FULFIL_TITLE.toLowerCase())) ?? null;
 			},
@@ -284,7 +286,7 @@ async function main(): Promise<void> {
 }
 
 async function _resolveUserId(api: Api): Promise<string> {
-	const session = await api.get<{ user?: { id: string } }[]>("/v1/auth/sessions");
+	const session = await api.get<Array<{ user?: { id: string } }>>("/v1/auth/sessions");
 	return session.body[0]?.user?.id ?? "unknown";
 }
 

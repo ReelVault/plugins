@@ -116,7 +116,7 @@ async function main(): Promise<void> {
 		const second = await upload(admin, zipPath);
 		s.expect(first === 200 || first === 201, `first upload -> ${first}`);
 		s.expect(second === 200 || second === 201, `second upload -> ${second}`);
-		const plugins = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins");
+		const plugins = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins");
 		s.expect(
 			plugins.body.find((plugin) => plugin.id === "org.reelvault.trailers")?.state === "enabled",
 			"trailers not enabled after double upload",

@@ -6,7 +6,7 @@ const suite = new Suite("10-tmdb");
 
 interface SearchGroup {
 	providerId: string;
-	results: { externalId: string; title: string; releaseDate?: string }[];
+	results: Array<{ externalId: string; title: string; releaseDate?: string }>;
 }
 interface ProviderConfiguration {
 	id: string;
@@ -20,7 +20,7 @@ async function main(): Promise<void> {
 	const admin = new Api().withCookie(state.adminCookie);
 
 	await suite.case("tmdb provider registered and enabled", async (s) => {
-		const providers = await admin.get<{ id: string; pluginId: string }[]>("/v1/providers");
+		const providers = await admin.get<Array<{ id: string; pluginId: string }>>("/v1/providers");
 		s.expect(providers.status === 200, `GET /v1/providers -> ${providers.status}`);
 		s.expect(
 			providers.body.some((provider) => provider.id === "tmdb" && provider.pluginId === "org.reelvault.tmdb"),
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
 		await Bun.sleep(500);
 		const response = await admin.post<unknown>("/v1/providers/search", { body: { type: "movie", title: "Sintel" } });
 		s.expect(response.status !== 500, `search with broken key crashed: ${response.status} ${JSON.stringify(response.body)}`);
-		const plugins = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins", { cookie: state.adminCookie });
+		const plugins = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie: state.adminCookie });
 		const tmdb = plugins.body.find((plugin) => plugin.id === "org.reelvault.tmdb");
 		s.expect(tmdb?.state === "enabled", `tmdb state after broken key: ${tmdb?.state}`);
 		const restored = await admin.put("/v1/admin/plugins/org.reelvault.tmdb/config", {

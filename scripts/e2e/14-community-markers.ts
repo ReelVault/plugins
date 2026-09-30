@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 			label: "E2E intro",
 		});
 		s.expect(response.status === 201, `POST /segments -> ${response.status} ${JSON.stringify(response.body)}`);
-		const segment = response.body as unknown as PublicSegment;
+		const segment = response.body;
 		s.expect(segment.status === "approved", `segment status: ${segment.status}`);
 		s.expect(Boolean(segment.id), "segment id missing");
 	});
@@ -80,8 +80,10 @@ async function main(): Promise<void> {
 	await suite.case("segments sync into native media markers", async (s) => {
 		const markers = await admin.get<unknown>("/v1/media-files/markers", { query: { limit: 1000 } });
 		s.expect(markers.status === 200, `markers -> ${markers.status} ${JSON.stringify(markers.body).slice(0, 150)}`);
-		const payload = markers.body as { data?: { mediaFileId?: string; type?: string }[] } | { mediaFileId?: string; type?: string }[];
-		const list: { mediaFileId?: string; type?: string }[] = Array.isArray(payload) ? payload : (payload.data ?? []);
+		const payload = markers.body as
+			| { data?: Array<{ mediaFileId?: string; type?: string }> }
+			| Array<{ mediaFileId?: string; type?: string }>;
+		const list: Array<{ mediaFileId?: string; type?: string }> = Array.isArray(payload) ? payload : (payload.data ?? []);
 		const raw = JSON.stringify(list);
 		s.expect(
 			list.some((marker) => marker.mediaFileId === mediaFileId && marker.type === "intro"),
@@ -133,14 +135,11 @@ async function main(): Promise<void> {
 			label: "Highlight (end ignored)",
 		});
 		s.expect(created.status === 201, `highlight -> ${created.status} ${JSON.stringify(created.body)}`);
-		const segment = created.body as unknown as PublicSegment;
+		const segment = created.body;
 		s.expect(segment.status === "pending", `highlight should be pending, got ${segment.status}`);
 		s.expect(segment.endSeconds === segment.startSeconds, "highlight end should equal start");
 		const vote = await userB.post<object>(`${base}/segments/vote?id=${segment.id}&mediaFileId=${mediaFileId}`, { value: 1 });
-		s.expect(
-			vote.status === 200 || Boolean((vote.body as { error?: string }).error) === false,
-			`vote -> ${vote.status} ${JSON.stringify(vote.body)}`,
-		);
+		s.expect(vote.status === 200 || !(vote.body as { error?: string }).error, `vote -> ${vote.status} ${JSON.stringify(vote.body)}`);
 		const after = await userA.get<{ segments?: PublicSegment[] }>(`${base}/segments`, { mediaFileId });
 		const updated = asSegments(after.body).find((item) => item.id === segment.id);
 		s.expect(updated?.status === "approved", `segment should be approved after upvote, got ${updated?.status}`);
@@ -159,7 +158,7 @@ async function main(): Promise<void> {
 			endSeconds: 230,
 		});
 		s.expect(created.status === 201, `recap -> ${created.status}`);
-		const segment = created.body as unknown as PublicSegment;
+		const segment = created.body;
 		await userB.post(`${base}/segments/vote?id=${segment.id}&mediaFileId=${mediaFileId}`, { body: { value: -1 } });
 		await admin.post(`${base}/segments/vote?id=${segment.id}&mediaFileId=${mediaFileId}`, { body: { value: -1 } });
 		const after = await userA.get<{ segments?: PublicSegment[] }>(`${base}/segments`, { mediaFileId });
@@ -185,10 +184,7 @@ async function main(): Promise<void> {
 		s.expect(Boolean(foreign), "no user B chapter to attack");
 		const foreignId = ensure(foreign, "chapter id").id;
 		const denied = await userA.delete<{ error?: string }>(`${base}/segments?id=${foreignId}&mediaFileId=${mediaFileId}`);
-		s.expect(
-			denied.status === 403 || Boolean((denied.body as { error?: string }).error),
-			`foreign delete -> ${denied.status} ${JSON.stringify(denied.body)}`,
-		);
+		s.expect(denied.status === 403 || Boolean(denied.body.error), `foreign delete -> ${denied.status} ${JSON.stringify(denied.body)}`);
 		const adminDelete = await admin.delete<{ error?: string }>(`${base}/segments?id=${foreignId}&mediaFileId=${mediaFileId}`);
 		s.expect(
 			adminDelete.status === 200 || adminDelete.status === 403,

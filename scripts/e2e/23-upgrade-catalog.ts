@@ -10,7 +10,7 @@ async function main(): Promise<void> {
 	const admin = new Api().withCookie(state.adminCookie);
 
 	await suite.case("catalog lists official repository entries", async (s) => {
-		const catalog = await admin.get<{ id: string; versions?: unknown[] }[]>("/v1/admin/plugins/catalog");
+		const catalog = await admin.get<Array<{ id: string; versions?: unknown[] }>>("/v1/admin/plugins/catalog");
 		s.expect(catalog.status === 200, `catalog -> ${catalog.status}`);
 		const trailers = catalog.body.find((entry) => entry.id === "org.reelvault.trailers");
 		s.expect(Boolean(trailers), "trailers missing from catalog");
@@ -18,7 +18,7 @@ async function main(): Promise<void> {
 
 	await suite.case("catalog entries expose install status and version", async (s) => {
 		const catalog =
-			await admin.get<{ id: string; version: string; status: string; installedVersion: string | null; repositoryId: string }[]>(
+			await admin.get<Array<{ id: string; version: string; status: string; installedVersion: string | null; repositoryId: string }>>(
 				"/v1/admin/plugins/catalog",
 			);
 		const requests = catalog.body.find((entry) => entry.id === "org.reelvault.requests");
@@ -51,10 +51,10 @@ async function main(): Promise<void> {
 	});
 
 	await suite.case("catalog install path installs an uninstalled plugin", async (s) => {
-		const repositories = await admin.get<{ id: string }[]>("/v1/admin/plugins/repositories");
+		const repositories = await admin.get<Array<{ id: string }>>("/v1/admin/plugins/repositories");
 		const official = repositories.body[0];
 		s.expect(Boolean(official?.id), "no catalog repository configured");
-		const before = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins");
+		const before = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins");
 		const wasEnabled = before.body.find((plugin) => plugin.id === "org.reelvault.trailers")?.state === "enabled";
 		if (wasEnabled) {
 			const removed = await admin.post("/v1/admin/plugins/org.reelvault.trailers/uninstall");
@@ -68,7 +68,7 @@ async function main(): Promise<void> {
 		});
 		s.expect(install.status === 200 || install.status === 201, `catalog install -> ${install.status} ${JSON.stringify(install.body)}`);
 		await Bun.sleep(1_000);
-		const after = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins");
+		const after = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins");
 		s.expect(
 			after.body.find((plugin) => plugin.id === "org.reelvault.trailers")?.state === "enabled",
 			"trailers not enabled after catalog install",

@@ -49,7 +49,7 @@ async function registerOrLogin(api: Api, account: { email: string; password: str
 }
 
 async function firstProfileId(api: Api, cookie: string, name: string): Promise<string> {
-	const response = await api.get<{ id: string; userId: string; name: string }[]>("/v1/profiles", { cookie });
+	const response = await api.get<Array<{ id: string; userId: string; name: string }>>("/v1/profiles", { cookie });
 	suite.expect(response.status === 200, `GET /v1/profiles -> ${response.status}`);
 	const existing = extractData<{ id: string; name: string }>(response.body)[0];
 	if (existing) return existing.id;
@@ -99,14 +99,14 @@ async function ensureLibrary(api: Api, cookie: string, name: string, type: "movi
 	return created.body.id;
 }
 
-async function listMediaFiles(api: Api, cookie: string, libraryId: string): Promise<{ id: string; metadataId?: string | null }[]> {
+async function listMediaFiles(api: Api, cookie: string, libraryId: string): Promise<Array<{ id: string; metadataId?: string | null }>> {
 	const response = await api.get("/v1/media-files", { cookie, query: { libraryId, pageSize: 100 } });
 	suite.expect(response.status === 200, `GET /v1/media-files -> ${response.status}`);
 	return extractData<{ id: string; metadataId?: string | null }>(response.body);
 }
 
 async function installMissingPlugins(api: Api, cookie: string): Promise<string[]> {
-	const before = await api.get<{ id: string; state: string }[]>("/v1/admin/plugins", { cookie });
+	const before = await api.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie });
 	suite.expect(before.status === 200, `GET /admin/plugins -> ${before.status}`);
 	const installed = new Set(extractData<{ id: string; state: string }>(before.body).map((plugin) => plugin.id));
 	for (const pluginId of PLUGIN_ZIPS) {
@@ -121,11 +121,13 @@ async function installMissingPlugins(api: Api, cookie: string): Promise<string[]
 			`install-upload ${pluginId} -> ${response.status} ${JSON.stringify(response.body)}`,
 		);
 	}
-	const after = await api.get<{ id: string; state: string }[]>("/v1/admin/plugins", { cookie });
-	const enabled = extractData<{ id: string; state: string }>(after.body)
-		.filter((plugin) => plugin.state === "enabled")
-		.map((plugin) => plugin.id);
-	return PLUGIN_ZIPS.filter((pluginId) => enabled.includes(pluginId));
+	const after = await api.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie });
+	const enabled = new Set(
+		extractData<{ id: string; state: string }>(after.body)
+			.filter((plugin) => plugin.state === "enabled")
+			.map((plugin) => plugin.id),
+	);
+	return PLUGIN_ZIPS.filter((pluginId) => enabled.has(pluginId));
 }
 
 async function main(): Promise<void> {

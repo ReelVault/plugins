@@ -24,7 +24,7 @@ async function main(): Promise<void> {
 	await suite.case("all plugins reload from disk after restart", async (s) => {
 		const plugins = await expectWait(
 			async () => {
-				const response = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins");
+				const response = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins");
 				if (response.status !== 200) return null;
 				const enabled = response.body.filter((plugin) => plugin.state === "enabled").map((plugin) => plugin.id);
 				return PLUGIN_ZIPS.every((id) => enabled.includes(id)) ? enabled : null;
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
 	});
 
 	await suite.case("plugin storage persists across restart", async (s) => {
-		const response = await admin.get<{ requests: { id: string }[] }>("/v1/plugins/org.reelvault.requests/requests", {
+		const response = await admin.get<{ requests: Array<{ id: string }> }>("/v1/plugins/org.reelvault.requests/requests", {
 			query: { scope: "all" },
 		});
 		s.expect(response.status === 200, `requests after restart -> ${response.status}`);

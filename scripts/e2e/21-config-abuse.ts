@@ -78,7 +78,7 @@ async function main(): Promise<void> {
 
 	await suite.case("broken key does not brick the config surface", async (s) => {
 		if (!keys.tmdbApiKey) return;
-		const read = await admin.get<{ fields: { name: string; type: string }[] }>("/v1/admin/plugins/org.reelvault.tmdb/config", {
+		const read = await admin.get<{ fields: Array<{ name: string; type: string }> }>("/v1/admin/plugins/org.reelvault.tmdb/config", {
 			cookie: state.adminCookie,
 		});
 		s.expect(

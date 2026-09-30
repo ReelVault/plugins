@@ -144,7 +144,7 @@ function pollWithScroll(page: UiPage, needle: string, timeoutMs: number): Promis
 			);
 			resolve(false);
 		};
-		poll();
+		poll().catch(() => undefined);
 	});
 }
 
@@ -167,7 +167,7 @@ const APPROVED_LABEL_PATTERN = /approved|zatwierdzon/i;
 const STALE_REQUEST_TITLE_PATTERN = /^(Dashboard Probe|Realtime UI|DASH FLOW|WS PROBE|SHADOW PROBE|Self Scope Probe)/;
 
 async function cleanupStaleUserRequests(userA: Api): Promise<void> {
-	const response = await userA.get<{ requests?: { id: string; title: string }[] }>("/v1/plugins/org.reelvault.requests/requests");
+	const response = await userA.get<{ requests?: Array<{ id: string; title: string }> }>("/v1/plugins/org.reelvault.requests/requests");
 	const stale = (response.body.requests ?? []).filter((request) => STALE_REQUEST_TITLE_PATTERN.test(request.title));
 	for (const request of stale) {
 		await userA.delete(`/v1/plugins/org.reelvault.requests/requests/${request.id}`);
@@ -191,7 +191,7 @@ function pollContent(page: UiPage, needle: string, timeoutMs: number, predicate?
 			}
 			resolve(false);
 		};
-		poll();
+		poll().catch(() => undefined);
 	});
 }
 

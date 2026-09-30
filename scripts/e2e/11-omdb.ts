@@ -6,7 +6,7 @@ const suite = new Suite("11-omdb");
 
 interface SearchGroup {
 	providerId: string;
-	results: { externalId: string; title: string; releaseDate?: string }[];
+	results: Array<{ externalId: string; title: string; releaseDate?: string }>;
 }
 
 async function main(): Promise<void> {
@@ -16,13 +16,13 @@ async function main(): Promise<void> {
 	const hasKey = Boolean(keys.omdbApiKey);
 
 	await suite.case("omdb provider registered and enabled", async (s) => {
-		const providers = await admin.get<{ id: string; pluginId: string }[]>("/v1/providers");
+		const providers = await admin.get<Array<{ id: string; pluginId: string }>>("/v1/providers");
 		s.expect(providers.status === 200, `GET /v1/providers -> ${providers.status}`);
 		s.expect(
 			providers.body.some((provider) => provider.id === "imdb" && provider.pluginId === "org.reelvault.omdb"),
 			"omdb provider (id=imdb) missing from registry",
 		);
-		const configs = await admin.get<{ id: string; enabled: boolean }[]>("/v1/providers/configurations");
+		const configs = await admin.get<Array<{ id: string; enabled: boolean }>>("/v1/providers/configurations");
 		s.expect(configs.body.find((provider) => provider.id === "imdb")?.enabled === true, "omdb provider not enabled");
 	});
 
@@ -36,7 +36,8 @@ async function main(): Promise<void> {
 			const hit = response.body.find((group) => group.providerId === "imdb")?.results.find((item) => item.externalId === "tt1375666");
 			s.expect((hit?.title ?? "").toLowerCase().includes("inception"), `expected Inception, got ${hit?.title}`);
 		},
-		hasKey === true ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
+
+		hasKey ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
 	);
 
 	await suite.case(
@@ -49,7 +50,8 @@ async function main(): Promise<void> {
 			const hit = group?.results.find((item) => item.title.toLowerCase().includes("inception"));
 			s.expect(hit?.externalId.startsWith("tt") === true, `externalId not tt-id: ${group?.results[0]?.externalId}`);
 		},
-		hasKey === true ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
+
+		hasKey ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
 	);
 
 	await suite.case(
@@ -62,7 +64,8 @@ async function main(): Promise<void> {
 				?.results.find((item) => item.title.toLowerCase().includes("breaking bad"));
 			s.expect(Boolean(hit), "Breaking Bad not in omdb tv results");
 		},
-		hasKey === true ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
+
+		hasKey ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
 	);
 
 	await suite.case(
@@ -72,10 +75,11 @@ async function main(): Promise<void> {
 				body: { type: "movie", providerId: "imdb", externalId: "tt0000000" },
 			});
 			s.expect(response.status === 200 || response.status === 404 || response.status === 400, `unexpected status ${response.status}`);
-			const plugins = await admin.get<{ id: string; state: string }[]>("/v1/admin/plugins", { cookie: state.adminCookie });
+			const plugins = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie: state.adminCookie });
 			s.expect(plugins.body.find((plugin) => plugin.id === "org.reelvault.omdb")?.state === "enabled", "omdb disabled after bad lookup");
 		},
-		hasKey === true ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
+
+		hasKey ? undefined : "OMDb key missing (E2E_OMDB_KEY)",
 	);
 
 	await suite.finish();
