@@ -1,0 +1,8 @@
+{
+	"id": "org.reelvault.notify-webhook",
+	"name": "Notify Webhook",
+	"version": "1.0.0",
+	"description": "Delivers every in-app notification (new episodes, requests, plugin alerts) to any JSON webhook endpoint.",
+	"entry": "./index.ts",
+	"capabilities": ["notificationChannel", "httpFetch"]
+}

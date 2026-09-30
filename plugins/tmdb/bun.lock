@@ -5,11 +5,11 @@
     "": {
       "name": "org.reelvault.tmdb",
       "dependencies": {
-        "@lorenzopant/tmdb": "^2.0.0",
+        "@lorenzopant/tmdb": "^2.1.0",
         "axios": "^1.20.0",
       },
       "devDependencies": {
-        "@reelvault/sdk": "^1.0.1",
+        "@reelvault/sdk": "^1.1.0",
         "@types/bun": "^1.4.2",
         "typescript": "^7.0.2",
       },
@@ -18,9 +18,9 @@
   "packages": {
     "@borewit/text-codec": ["@borewit/text-codec@0.2.2", "", {}, "sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ=="],
 
-    "@lorenzopant/tmdb": ["@lorenzopant/tmdb@2.0.0", "", { "bin": { "tmdb": "dist/cli.mjs" } }, "sha512-alZVJpIeMh91U2kkLmws8GnH2zwubzxHDl/4w7qQGcZbySBHsGBissucXbolkeDKJ3aRTd5g6PYH2X4bQZ7pog=="],
+    "@lorenzopant/tmdb": ["@lorenzopant/tmdb@2.1.0", "", { "bin": { "tmdb": "dist/cli.mjs" } }, "sha512-2MOQi6uCBADZGvYB1fWHv5j4dl1/irvwJMf+EC6AHBD8YVkV+x8LlviQf1JbIbiDkEzrS3bjFZcBNrm+qARuow=="],
 
-    "@reelvault/sdk": ["@reelvault/sdk@1.0.1", "", { "dependencies": { "@sinclair/typebox": "^0.34.52", "elysia": "^1.4.30" } }, "sha512-XQEu9NQcqHruoekETqHmAgj36BvCK6UNsOUp61PdjkAxuU/i5sgGCwB2eOGflwzLvtLn0/lvviR8mvFj8AKfWQ=="],
+    "@reelvault/sdk": ["@reelvault/sdk@1.1.0", "", { "dependencies": { "@sinclair/typebox": "^0.34.52", "elysia": "^1.4.30" } }, "sha512-QpKvm2IWkJmqIeQrXiJiqm9z3yQai82WHq9+qUzSVGpoVGn+6HQVgXkq64uvWIRtnzRs5TGMYCIieTlRv9hMrA=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.34.52", "", {}, "sha512-XiMQh7qqVlxZzcVD+kkGMNGMzcTrDMLWI7S4x7z1MkCkbDPrekpZXEUK0eZqZFMuHQg2a2DZOcDIh9o5v3Gonw=="],
 
@@ -30,7 +30,7 @@
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
-    "@types/node": ["@types/node@26.6.2", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-X1P21scMv4zGKLYqjdGjaKa7COa0RKVYYZZN/NfvLQ1JegxFhdhpZG/Lyn8AXx6CDUavKAd11v6BvfpkDByK8g=="],
+    "@types/node": ["@types/node@26.6.3", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-dsqMQQoeTLqu9wynDD00q573mNzso3IdQOAfHRJqLCcmCFPoGo9A1bDpUcv/9tnKpErQWv9uKeGfl37EIS02Yg=="],
 
     "@typescript/typescript-aix-ppc64": ["@typescript/typescript-aix-ppc64@7.0.2", "", { "os": "aix", "cpu": "ppc64" }, "sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ=="],
 
@@ -150,7 +150,7 @@
 
     "typescript": ["typescript@7.0.2", "", { "optionalDependencies": { "@typescript/typescript-aix-ppc64": "7.0.2", "@typescript/typescript-darwin-arm64": "7.0.2", "@typescript/typescript-darwin-x64": "7.0.2", "@typescript/typescript-freebsd-arm64": "7.0.2", "@typescript/typescript-freebsd-x64": "7.0.2", "@typescript/typescript-linux-arm": "7.0.2", "@typescript/typescript-linux-arm64": "7.0.2", "@typescript/typescript-linux-loong64": "7.0.2", "@typescript/typescript-linux-mips64el": "7.0.2", "@typescript/typescript-linux-ppc64": "7.0.2", "@typescript/typescript-linux-riscv64": "7.0.2", "@typescript/typescript-linux-s390x": "7.0.2", "@typescript/typescript-linux-x64": "7.0.2", "@typescript/typescript-netbsd-arm64": "7.0.2", "@typescript/typescript-netbsd-x64": "7.0.2", "@typescript/typescript-openbsd-arm64": "7.0.2", "@typescript/typescript-openbsd-x64": "7.0.2", "@typescript/typescript-sunos-x64": "7.0.2", "@typescript/typescript-win32-arm64": "7.0.2", "@typescript/typescript-win32-x64": "7.0.2" }, "bin": { "tsc": "bin/tsc" } }, "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA=="],
 
-    "uint8array-extras": ["uint8array-extras@1.5.0", "", {}, "sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A=="],
+    "uint8array-extras": ["uint8array-extras@1.6.0", "", {}, "sha512-8iAasVS4wUx0gPLjH8Xtz2PeDzTSiy8QiLGu2DT3X5GU+egFEQhpnbtkehbAwjvDcxIERmCYcysiODFmE3Ud0Q=="],
 
     "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
   }

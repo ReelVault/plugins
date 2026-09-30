@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "org.reelvault.requests",
+      "name": "org.reelvault.notify-webhook",
       "devDependencies": {
         "@reelvault/sdk": "^1.1.0",
         "@types/bun": "^1.4.2",

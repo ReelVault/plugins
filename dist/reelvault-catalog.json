@@ -15,7 +15,7 @@
 				"notification"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.0.zip",
-			"checksum": "sha256-3981508d026cdacae77481af15865cde08d957990213d0a33d10d52a4fa78c72",
+			"checksum": "sha256-ce37e5306e51df5d668ff156c5f8c722e7ae0a4715b31649a974f0aa1f33cf2b",
 			"date": "2026-09-23T19:32:17.484Z"
 		},
 		{
@@ -34,7 +34,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.1.zip",
-			"checksum": "sha256-ed59fe98e843e535532380b8424fc79d460d861323ad5f83ad12e3804e89c397",
+			"checksum": "sha256-9d172dbd9cf6b5ee39e817b5026c4ee4b43a1c52e0db04816ed8f23ee3b39335",
 			"date": "2026-09-30T09:37:12.164Z",
 			"versions": [
 				{
@@ -60,8 +60,22 @@
 				"mediaRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.community-markers/org.reelvault.community-markers-1.0.0.zip",
-			"checksum": "sha256-1f61b37664b7840980e6822ea3f7f207c76ebcc06a30c007ee99ed8a9960e0e4",
+			"checksum": "sha256-b2796a5de770e5aa58eb5742aef3ad691de5f24561357081536e4ec15bd3d2f9",
 			"date": "2026-09-23T19:32:17.484Z"
+		},
+		{
+			"id": "org.reelvault.notify-webhook",
+			"name": "Notify Webhook",
+			"version": "1.0.0",
+			"description": "Delivers every in-app notification (new episodes, requests, plugin alerts) to any JSON webhook endpoint.",
+			"category": "automation",
+			"capabilities": [
+				"notificationChannel",
+				"httpFetch"
+			],
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.notify-webhook/org.reelvault.notify-webhook-1.0.0.zip",
+			"checksum": "sha256-6709d21a8bd65f4042d384194a4f5738a1ead40fe03687f3d00706e45ab6cfd9",
+			"date": "2026-09-30T12:18:26.060Z"
 		},
 		{
 			"id": "org.reelvault.omdb",
@@ -73,7 +87,7 @@
 				"metadataProvider"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.0.zip",
-			"checksum": "sha256-28799074db65215719ee52b5d348ddbea0865bf0d1d90eb3205761a11e6119bc",
+			"checksum": "sha256-922016dca0b26a2331efa340e852605585c5685b652de00f2b44c72a52a96fe3",
 			"date": "2026-09-23T19:32:17.228Z"
 		},
 		{
@@ -93,7 +107,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.1.zip",
-			"checksum": "sha256-ada1a6d6c202c7343c59a3b44950c597ec9f67851095bebdffcd62bcdfb30ca1",
+			"checksum": "sha256-747ec6ef7c415b9c041fbc2d85deff35782e267f57d5aa882604699623dc3d7b",
 			"date": "2026-09-30T09:37:12.155Z",
 			"versions": [
 				{
@@ -114,7 +128,7 @@
 				"metadataProvider"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.0.zip",
-			"checksum": "sha256-e7c8d9e92618bae265f0f772bd44e3d113808725057a53dff2f7cf63beda16ad",
+			"checksum": "sha256-09ed24bf65aec673dca368add3a72a001cef2a2455c123946872683e9b68dac4",
 			"date": "2026-09-23T19:32:17.227Z"
 		},
 		{
@@ -130,7 +144,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.0.zip",
-			"checksum": "sha256-8517ce77a633350dcb20b1bbfb649e171f01301fce09370fcbbdc7bc1da5d0ec",
+			"checksum": "sha256-991cdb48ae83e7bbb43e25cc1e89bef3361f845ae483e43d974daf89cd33d1ef",
 			"date": "2026-09-23T19:32:17.228Z"
 		},
 		{
@@ -147,7 +161,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.webhooks/org.reelvault.webhooks-1.0.0.zip",
-			"checksum": "sha256-8b1ea6cac165c795ad036148a118f445a3d9763e45a2d5853db08d3db572aa5d",
+			"checksum": "sha256-2dfe6d36a303df4b5c3b1d6c69263ce3e33d37b334e091aeef4f9809f5258729",
 			"date": "2026-09-23T19:32:17.484Z"
 		}
 	]
