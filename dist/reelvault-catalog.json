@@ -121,15 +121,23 @@
 		{
 			"id": "org.reelvault.tmdb",
 			"name": "TMDB Metadata Provider",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Metadata provider backed by The Movie Database API.",
 			"category": "metadata",
 			"capabilities": [
 				"metadataProvider"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.0.zip",
-			"checksum": "sha256-09ed24bf65aec673dca368add3a72a001cef2a2455c123946872683e9b68dac4",
-			"date": "2026-09-23T19:32:17.227Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.1.zip",
+			"checksum": "sha256-c45aba1ce056a82da5a95d8d6e3464355d864291196399681852119ba6ff31ee",
+			"date": "2026-09-30T19:15:24.759Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.0.zip",
+					"checksum": "sha256-09ed24bf65aec673dca368add3a72a001cef2a2455c123946872683e9b68dac4",
+					"date": "2026-09-23T19:32:17.227Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.trailers",

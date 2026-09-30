@@ -3,6 +3,7 @@ import type {
 	MetadataProviderContext,
 	ProviderEpisodeResult,
 	ProviderMetadataResult,
+	ProviderRequestHints,
 	ProviderSearchResult,
 	ProviderSeasonResult,
 } from "@reelvault/sdk/plugin";
@@ -45,27 +46,27 @@ export function createTmdbProvider(config: TmdbConfig): MetadataProvider {
 			api = new TMDBApi(config.apiKey, config.language, config.searchLanguage, config.fallbackLanguage);
 		},
 
-		async search(type: "movie" | "tv_show", query: string, year?: number): Promise<ProviderSearchResult[]> {
+		async search(type: "movie" | "tv_show", query: string, year?: number, hints?: ProviderRequestHints): Promise<ProviderSearchResult[]> {
 			if (!query.trim()) return [];
 			try {
 				if (type === "tv_show") {
-					return await searchSeries(getApi(), query, year);
+					return await searchSeries(getApi(), query, year, hints?.language);
 				}
 
-				return await searchMovie(getApi(), query, year);
+				return await searchMovie(getApi(), query, year, hints?.language);
 			} catch (error) {
 				logger?.error("TMDB search failed", error, { type, query, year });
 				return [];
 			}
 		},
 
-		async getDetails(type: "movie" | "tv_show", externalId: string): Promise<ProviderMetadataResult | null> {
+		async getDetails(type: "movie" | "tv_show", externalId: string, hints?: ProviderRequestHints): Promise<ProviderMetadataResult | null> {
 			try {
 				if (type === "tv_show") {
-					return await getDetailsSeries(getApi(), externalId);
+					return await getDetailsSeries(getApi(), externalId, hints?.language);
 				}
 
-				return await getDetailsMovie(getApi(), externalId);
+				return await getDetailsMovie(getApi(), externalId, hints?.language);
 			} catch (error) {
 				logger?.error("TMDB metadata details failed", error, { type, externalId });
 				return null;
@@ -118,18 +119,23 @@ export function createTmdbProvider(config: TmdbConfig): MetadataProvider {
 			}
 		},
 
-		async getSeasonDetails(externalId: string, seasonNumber: number): Promise<ProviderSeasonResult | null> {
+		async getSeasonDetails(externalId: string, seasonNumber: number, hints?: ProviderRequestHints): Promise<ProviderSeasonResult | null> {
 			try {
-				return await getDetailsSeason(getApi(), externalId, seasonNumber);
+				return await getDetailsSeason(getApi(), externalId, seasonNumber, hints?.language);
 			} catch (error) {
 				logger?.error("TMDB season details failed", error, { externalId, seasonNumber });
 				return null;
 			}
 		},
 
-		async getEpisodeDetails(externalId: string, seasonNumber: number, episodeNumber: number): Promise<ProviderEpisodeResult | null> {
+		async getEpisodeDetails(
+			externalId: string,
+			seasonNumber: number,
+			episodeNumber: number,
+			hints?: ProviderRequestHints,
+		): Promise<ProviderEpisodeResult | null> {
 			try {
-				return await getDetailsEpisode(getApi(), externalId, seasonNumber, episodeNumber);
+				return await getDetailsEpisode(getApi(), externalId, seasonNumber, episodeNumber, hints?.language);
 			} catch (error) {
 				logger?.error("TMDB episode details failed", error, { externalId, seasonNumber, episodeNumber });
 				return null;

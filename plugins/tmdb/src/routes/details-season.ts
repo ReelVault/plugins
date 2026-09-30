@@ -1,9 +1,18 @@
 import type { ProviderSeasonResult } from "@reelvault/sdk/plugin";
-import type { TMDBApi } from "../tmdb";
+import { type TMDBApi, toLanguage } from "../tmdb";
 
-export async function getDetailsSeason(api: TMDBApi, externalId: string, seasonNumber: number): Promise<ProviderSeasonResult | null> {
+export async function getDetailsSeason(
+	api: TMDBApi,
+	externalId: string,
+	seasonNumber: number,
+	hintLanguage?: string,
+): Promise<ProviderSeasonResult | null> {
 	const series_id = Number(externalId);
-	const details = await api.client.tv_seasons.details({ series_id, season_number: seasonNumber });
+	const details = await api.client.tv_seasons.details({
+		series_id,
+		season_number: seasonNumber,
+		language: toLanguage(hintLanguage ?? api.language),
+	});
 
 	let fallbackDetails: typeof details | null = null;
 	let seasonOverview = details.overview;

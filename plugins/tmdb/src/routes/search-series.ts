@@ -1,8 +1,8 @@
 import type { ProviderSearchResult } from "@reelvault/sdk/plugin";
 import { type TMDBApi, toLanguage } from "../tmdb";
 
-export async function searchSeries(api: TMDBApi, query: string, year?: number): Promise<ProviderSearchResult[]> {
-	const searchLanguage = toLanguage(api.searchLanguage || api.language);
+export async function searchSeries(api: TMDBApi, query: string, year?: number, hintLanguage?: string): Promise<ProviderSearchResult[]> {
+	const searchLanguage = toLanguage(hintLanguage ?? api.searchLanguage);
 
 	let results: Array<{
 		id: number;

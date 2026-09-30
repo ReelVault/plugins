@@ -1,10 +1,11 @@
 import type { ProviderMetadataResult } from "@reelvault/sdk/plugin";
-import type { TMDBApi } from "../tmdb";
+import { type TMDBApi, toLanguage } from "../tmdb";
 
-export async function getDetailsSeries(api: TMDBApi, id: string): Promise<ProviderMetadataResult | null> {
+export async function getDetailsSeries(api: TMDBApi, id: string, hintLanguage?: string): Promise<ProviderMetadataResult | null> {
 	const tvShowId = Number(id);
 	const details = await api.client.tv_series.details({
 		series_id: tvShowId,
+		language: toLanguage(hintLanguage ?? api.language),
 		append_to_response: ["keywords", "credits"],
 	});
 
