@@ -30,6 +30,8 @@ interface CatalogSidecar {
 	homepage?: string;
 	changelog?: string;
 	iconUrl?: string;
+	/** Oldest server release allowed to install this plugin — copied verbatim into the catalog entry. */
+	minServerVersion?: string;
 }
 
 interface PluginManifest {
@@ -50,6 +52,8 @@ interface CatalogEntry {
 	homepage?: string;
 	iconUrl?: string;
 	changelog?: string;
+	/** Oldest server release allowed to install this version — carried into version history on rebuilds. */
+	minServerVersion?: string;
 	downloadUrl: string;
 	checksum: string;
 	date?: string;
@@ -103,6 +107,8 @@ function parseCatalogSidecar(raw: string): CatalogSidecar {
 	if (changelog !== undefined) sidecar.changelog = changelog;
 	const iconUrl = optionalString(value, "iconUrl");
 	if (iconUrl !== undefined) sidecar.iconUrl = iconUrl;
+	const minServerVersion = optionalString(value, "minServerVersion");
+	if (minServerVersion !== undefined) sidecar.minServerVersion = minServerVersion;
 	return sidecar;
 }
 
@@ -300,6 +306,7 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 		...(sidecar.homepage ? { homepage: sidecar.homepage } : {}),
 		...(sidecar.iconUrl ? { iconUrl: sidecar.iconUrl } : {}),
 		...(sidecar.changelog ? { changelog: sidecar.changelog } : {}),
+		...(sidecar.minServerVersion ? { minServerVersion: sidecar.minServerVersion } : {}),
 		...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
 	};
 

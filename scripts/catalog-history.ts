@@ -8,6 +8,8 @@ export interface CatalogVersionEntry {
 	version: string;
 	date?: string;
 	changelog?: string;
+	/** Oldest server release allowed to install this version — preserved so rollbacks keep their gate. */
+	minServerVersion?: string;
 	downloadUrl: string;
 	checksum: string;
 }
@@ -17,6 +19,7 @@ export interface CatalogHistoryEntry {
 	version: string;
 	date?: string;
 	changelog?: string;
+	minServerVersion?: string;
 	checksum: string;
 	versions?: CatalogVersionEntry[];
 }
@@ -88,6 +91,7 @@ export function buildVersionHistory(
 		};
 		if (known?.date !== undefined) rebuilt.date = known.date;
 		if (known?.changelog !== undefined) rebuilt.changelog = known.changelog;
+		if (known?.minServerVersion !== undefined) rebuilt.minServerVersion = known.minServerVersion;
 		history.set(version, rebuilt);
 	}
 
@@ -102,6 +106,7 @@ function toVersionEntry(entry: CatalogHistoryEntry, pluginId: string, baseUrl: s
 	};
 	if (entry.date !== undefined) version.date = entry.date;
 	if (entry.changelog !== undefined) version.changelog = entry.changelog;
+	if (entry.minServerVersion !== undefined) version.minServerVersion = entry.minServerVersion;
 
 	return version;
 }
