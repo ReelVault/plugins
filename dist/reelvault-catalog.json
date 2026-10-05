@@ -93,9 +93,10 @@
 		{
 			"id": "org.reelvault.requests",
 			"name": "Media Requests",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "Users request missing movies and series; admins approve; users are notified automatically when a title lands in the library.",
 			"category": "automation",
+			"changelog": "1.0.2: request storage writes are now atomic (host-locked update) — concurrent submits and background availability checks no longer lose requests.",
 			"capabilities": [
 				"httpRoute",
 				"storage",
@@ -106,10 +107,16 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.1.zip",
-			"checksum": "sha256-747ec6ef7c415b9c041fbc2d85deff35782e267f57d5aa882604699623dc3d7b",
-			"date": "2026-09-30T09:37:12.155Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.2.zip",
+			"checksum": "sha256-89c05ad93cc300789440e30d3d6f21050deb17247da3d77711659e792b998984",
+			"date": "2026-10-05T11:50:41.849Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.1.zip",
+					"checksum": "sha256-747ec6ef7c415b9c041fbc2d85deff35782e267f57d5aa882604699623dc3d7b",
+					"date": "2026-09-30T09:37:12.155Z"
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.0.zip",
@@ -128,7 +135,7 @@
 				"metadataProvider"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.1.zip",
-			"checksum": "sha256-c45aba1ce056a82da5a95d8d6e3464355d864291196399681852119ba6ff31ee",
+			"checksum": "sha256-2682beafb3456bf77bc6745300ad0fe8d06ad948c222efc229629f244737b96a",
 			"date": "2026-09-30T19:15:24.759Z",
 			"versions": [
 				{

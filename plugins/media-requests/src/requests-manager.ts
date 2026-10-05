@@ -49,58 +49,71 @@ export class RequestsManager {
 	}
 
 	async createRequest(input: CreateMediaRequestInput, user: MediaRequestUser): Promise<MediaRequest> {
-		const all = await this.getAllRequests();
+		let created: MediaRequest | undefined;
 
-		// Limit check for non-admin
-		const userActiveCount = all.filter(
-			(r) => r.requestedBy.userId === user.userId && (r.status === "pending" || r.status === "approved" || r.status === "in_progress"),
-		).length;
+		// Atomic read-modify-write: the limit check, dedup and the insert all run
+		// under the host's per-key lock, so a background availability pass can no
+		// longer clobber a submit made at the same moment.
+		await this.host.storage.update(STORAGE_KEY_REQUESTS, (current) => {
+			const all = isMediaRequestArray(current) ? current : [];
 
-		if (userActiveCount >= this.config.maxActiveRequestsPerUser) {
-			throw new Error(`Active request limit reached (${this.config.maxActiveRequestsPerUser}). Wait for earlier requests to be fulfilled.`);
-		}
+			// Limit check for non-admin
+			const userActiveCount = all.filter(
+				(r) => r.requestedBy.userId === user.userId && (r.status === "pending" || r.status === "approved" || r.status === "in_progress"),
+			).length;
 
-		// Deduplication check by external id or title+year
-		const existing = all.find(
-			(r) =>
-				(input.externalId != null && r.externalId === input.externalId) ||
-				(input.tmdbId != null && r.tmdbId === input.tmdbId) ||
-				(input.imdbId != null && r.imdbId === input.imdbId) ||
-				(r.title.toLowerCase() === input.title.toLowerCase() && r.year === input.year && r.mediaType === input.mediaType),
-		);
-
-		if (existing) {
-			if (existing.status === "available") {
-				throw new Error(`"${input.title}" is already marked as available in the library.`);
+			if (userActiveCount >= this.config.maxActiveRequestsPerUser) {
+				throw new Error(
+					`Active request limit reached (${this.config.maxActiveRequestsPerUser}). Wait for earlier requests to be fulfilled.`,
+				);
 			}
-			throw new Error(`A request for this title already exists (status: ${existing.status}).`);
-		}
 
-		const now = new Date().toISOString();
-		const newRequest: MediaRequest = {
-			id: crypto.randomUUID(),
-			title: input.title.trim(),
-			mediaType: input.mediaType,
-			year: input.year,
-			tmdbId: input.tmdbId ?? (input.providerId === "tmdb" ? input.externalId : undefined),
-			imdbId: input.imdbId,
-			providerId: input.providerId,
-			externalId: input.externalId,
-			posterPath: input.posterPath,
-			overview: input.overview,
-			requestedBy: {
-				userId: user.userId,
-				profileId: user.profileId,
-				userName: input.requestedByName ?? user.userName,
-			},
-			status: this.config.autoApprove ? "approved" : "pending",
-			notes: input.notes,
-			createdAt: now,
-			updatedAt: now,
-		};
+			// Deduplication check by external id or title+year
+			const existing = all.find(
+				(r) =>
+					(input.externalId != null && r.externalId === input.externalId) ||
+					(input.tmdbId != null && r.tmdbId === input.tmdbId) ||
+					(input.imdbId != null && r.imdbId === input.imdbId) ||
+					(r.title.toLowerCase() === input.title.toLowerCase() && r.year === input.year && r.mediaType === input.mediaType),
+			);
 
-		all.push(newRequest);
-		await this.host.storage.set(STORAGE_KEY_REQUESTS, all);
+			if (existing) {
+				if (existing.status === "available") {
+					throw new Error(`"${input.title}" is already marked as available in the library.`);
+				}
+				throw new Error(`A request for this title already exists (status: ${existing.status}).`);
+			}
+
+			const now = new Date().toISOString();
+			created = {
+				id: crypto.randomUUID(),
+				title: input.title.trim(),
+				mediaType: input.mediaType,
+				year: input.year,
+				tmdbId: input.tmdbId ?? (input.providerId === "tmdb" ? input.externalId : undefined),
+				imdbId: input.imdbId,
+				providerId: input.providerId,
+				externalId: input.externalId,
+				posterPath: input.posterPath,
+				overview: input.overview,
+				requestedBy: {
+					userId: user.userId,
+					profileId: user.profileId,
+					userName: input.requestedByName ?? user.userName,
+				},
+				status: this.config.autoApprove ? "approved" : "pending",
+				notes: input.notes,
+				createdAt: now,
+				updatedAt: now,
+			};
+
+			all.push(created);
+			return all;
+		});
+
+		if (!created) throw new Error("Request submission did not persist.");
+
+		const newRequest = created;
 
 		this.host.logger.info("New media request submitted", {
 			id: newRequest.id,
@@ -113,24 +126,33 @@ export class RequestsManager {
 	}
 
 	async updateRequestStatus(id: string, status: MediaRequestStatus, notes?: string): Promise<MediaRequest> {
-		const all = await this.getAllRequests();
-		const req = all.find((r) => r.id === id);
-		if (!req) {
-			throw new Error(`Request with ID ${id} not found.`);
-		}
+		let updated: MediaRequest | undefined;
 
-		const now = new Date().toISOString();
-		req.status = status;
-		req.updatedAt = now;
-		if (notes !== undefined) req.notes = notes === "" ? undefined : notes;
-		if (status === "available") {
-			req.availableAt = now;
-		} else {
-			req.availableAt = undefined;
-			req.matchedMetadataId = undefined;
-		}
+		await this.host.storage.update(STORAGE_KEY_REQUESTS, (current) => {
+			const all = isMediaRequestArray(current) ? current : [];
+			const req = all.find((r) => r.id === id);
+			if (!req) {
+				throw new Error(`Request with ID ${id} not found.`);
+			}
 
-		await this.host.storage.set(STORAGE_KEY_REQUESTS, all);
+			req.status = status;
+			req.updatedAt = new Date().toISOString();
+			if (notes !== undefined) req.notes = notes === "" ? undefined : notes;
+			if (status === "available") {
+				req.availableAt = req.updatedAt;
+			} else {
+				req.availableAt = undefined;
+				req.matchedMetadataId = undefined;
+			}
+
+			updated = req;
+
+			return all;
+		});
+
+		if (!updated) throw new Error(`Request status update for ${id} did not persist.`);
+
+		const req = updated;
 
 		this.host.logger.info("Media request status updated", {
 			id,
@@ -142,69 +164,81 @@ export class RequestsManager {
 	}
 
 	async deleteRequest(id: string, requesterUserId?: string, isAdmin = false): Promise<void> {
-		const all = await this.getAllRequests();
-		const index = all.findIndex((r) => r.id === id);
-		const req = all[index];
-		if (!req) {
-			throw new Error(`Request with ID ${id} not found.`);
-		}
-		if (!isAdmin && requesterUserId && req.requestedBy.userId !== requesterUserId) {
-			throw new Error("You do not have permission to delete this request.");
-		}
+		let deletedTitle: string | undefined;
 
-		all.splice(index, 1);
-		await this.host.storage.set(STORAGE_KEY_REQUESTS, all);
+		await this.host.storage.update(STORAGE_KEY_REQUESTS, (current) => {
+			const all = isMediaRequestArray(current) ? current : [];
+			const index = all.findIndex((r) => r.id === id);
+			const req = all[index];
+			if (!req) {
+				throw new Error(`Request with ID ${id} not found.`);
+			}
+			if (!isAdmin && requesterUserId && req.requestedBy.userId !== requesterUserId) {
+				throw new Error("You do not have permission to delete this request.");
+			}
 
-		this.host.logger.info("Media request deleted", { id, title: req.title });
+			deletedTitle = req.title;
+			all.splice(index, 1);
+
+			return all;
+		});
+
+		this.host.logger.info("Media request deleted", { id, title: deletedTitle });
 	}
 
 	async markAsAvailable(request: MediaRequest, metadataId: string): Promise<void> {
-		const all = await this.getAllRequests();
-		const req = all.find((r) => r.id === request.id);
-		if (!req) return;
+		let fulfilled: MediaRequest | undefined;
 
-		if (req.status === "available") return; // already marked
+		await this.host.storage.update(STORAGE_KEY_REQUESTS, (current) => {
+			const all = isMediaRequestArray(current) ? current : [];
+			const req = all.find((r) => r.id === request.id);
+			if (!req) return all;
 
-		const now = new Date().toISOString();
-		req.status = "available";
-		req.availableAt = now;
-		req.updatedAt = now;
-		req.matchedMetadataId = metadataId;
+			if (req.status === "available") return all; // already marked
 
-		await this.host.storage.set(STORAGE_KEY_REQUESTS, all);
+			req.status = "available";
+			req.availableAt = new Date().toISOString();
+			req.updatedAt = req.availableAt;
+			req.matchedMetadataId = metadataId;
+			fulfilled = req;
+
+			return all;
+		});
+
+		if (!fulfilled) return;
 
 		this.host.logger.info("Media request fulfilled and marked as available", {
-			requestId: req.id,
-			title: req.title,
+			requestId: fulfilled.id,
+			title: fulfilled.title,
 			metadataId,
-			userId: req.requestedBy.userId,
+			userId: fulfilled.requestedBy.userId,
 		});
 
 		// send the notification
 		if (this.config.notifyOnAvailable) {
 			try {
 				await this.host.notifications.create({
-					userId: req.requestedBy.userId,
-					profileId: req.requestedBy.profileId,
+					userId: fulfilled.requestedBy.userId,
+					profileId: fulfilled.requestedBy.profileId,
 					type: "media.available",
 					title: "Your requested title is now available!",
-					message: `"${req.title}" was just added to your ReelVault library.`,
+					message: `"${fulfilled.title}" was just added to your ReelVault library.`,
 					data: {
-						requestId: req.id,
+						requestId: fulfilled.id,
 						metadataId,
-						title: req.title,
-						mediaType: req.mediaType,
+						title: fulfilled.title,
+						mediaType: fulfilled.mediaType,
 					},
 					link: `/metadata/${metadataId}`,
 				});
 				this.host.logger.info("Notification sent to user for fulfilled request", {
-					userId: req.requestedBy.userId,
-					title: req.title,
+					userId: fulfilled.requestedBy.userId,
+					title: fulfilled.title,
 				});
 			} catch (err) {
 				this.host.logger.error("Failed to send availability notification", err, {
-					userId: req.requestedBy.userId,
-					requestId: req.id,
+					userId: fulfilled.requestedBy.userId,
+					requestId: fulfilled.id,
 				});
 			}
 		}
