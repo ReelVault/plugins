@@ -137,7 +137,9 @@ export function createTmdbProvider(config: TmdbConfig): MetadataProvider {
 			try {
 				return await getDetailsEpisode(getApi(), externalId, seasonNumber, episodeNumber, hints?.language);
 			} catch (error) {
-				logger?.error("TMDB episode details failed", error, { externalId, seasonNumber, episodeNumber });
+				// A missing episode is an upstream data gap (404), not a server
+				// failure — the caller falls back to a placeholder episode.
+				logger?.warn("TMDB episode details failed", { externalId, seasonNumber, episodeNumber, error: String(error) });
 				return null;
 			}
 		},
