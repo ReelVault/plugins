@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 export const E2E_ROOT = "/tmp/rv-plugins-e2e";
 export const DATA_DIR = join(E2E_ROOT, "data");
@@ -14,8 +14,13 @@ export const KEYS_PATH = join(E2E_ROOT, "keys.json");
 
 export const PORT = 4660;
 export const BASE_URL = `http://localhost:${PORT}`;
-export const SERVER_DIR = "/home/gam24/Documents/GitHub/ReelVault/reelvault";
-export const WEB_DIST = "/home/gam24/Documents/GitHub/ReelVault/website/dist";
+
+/** ReelVault workspace root — the directory containing plugins/, reelvault/ and website/. */
+const WORKSPACE_ROOT = resolve(import.meta.dir, "..", "..", "..", "..");
+
+/** Sibling checkouts; point the env overrides elsewhere when they do not live next to plugins/. */
+export const SERVER_DIR = process.env.E2E_SERVER_DIR ?? join(WORKSPACE_ROOT, "reelvault");
+export const WEB_DIST = process.env.E2E_WEB_DIST ?? join(WORKSPACE_ROOT, "website", "dist");
 export const PLUGINS_DIST = join(import.meta.dir, "..", "..", "..", "dist", "plugins");
 
 export const PLUGIN_ZIPS = [

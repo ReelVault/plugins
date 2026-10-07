@@ -8,6 +8,9 @@ built fresh from `../website`).
 
 - Bun 1.4+, ffmpeg on PATH, Google Chrome at `/usr/sbin/google-chrome-stable`
   (UI suite), network access (TMDB/OMDb/postman-echo/official plugin catalog).
+- The harness expects the standard workspace layout — sibling `reelvault/` and
+  `website/` checkouts next to `plugins/`. When they live elsewhere, point
+  `E2E_SERVER_DIR` and `E2E_WEB_DIST` at them.
 - API keys: `E2E_TMDB_KEY` and `E2E_OMDB_KEY` env vars, or a
   `/tmp/rv-plugins-e2e/keys.json` file (`{"tmdbApiKey": "...", "omdbApiKey": "..."}`).
   Without them the provider suites SKIP their real-API cases (everything else runs).
