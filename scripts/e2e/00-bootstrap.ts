@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Api, expectWait, extractData, waitForHealth } from "./lib/client";
 import { ensure, Suite } from "./lib/report";
@@ -105,13 +105,55 @@ async function listMediaFiles(api: Api, cookie: string, libraryId: string): Prom
 	return extractData<{ id: string; metadataId?: string | null }>(response.body);
 }
 
+const CATALOG_PATH = join(PLUGINS_DIST, "..", "reelvault-catalog.json");
+
+/** Version the catalog build just packaged for a plugin, or undefined when unknown. */
+function readCatalogVersion(pluginId: string): string | undefined {
+	try {
+		const catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf8")) as { plugins?: Array<{ id?: string; version?: string }> };
+		return catalog.plugins?.find((plugin) => plugin.id === pluginId)?.version;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Newest built zip for a plugin: the version just published to the catalog,
+ * falling back to the highest versioned zip on disk. The previous hardcoded
+ * `-1.0.0.zip` kept installing stale packages after every version bump.
+ */
+function resolvePluginZip(pluginId: string): string {
+	const directory = join(PLUGINS_DIST, pluginId);
+	const catalogVersion = readCatalogVersion(pluginId);
+	if (catalogVersion) {
+		const zipPath = join(directory, `${pluginId}-${catalogVersion}.zip`);
+		if (existsSync(zipPath)) return zipPath;
+	}
+
+	if (!existsSync(directory)) return join(directory, `${pluginId}-1.0.0.zip`);
+	const prefix = `${pluginId}-`;
+	const versions = readdirSync(directory)
+		.filter((name) => name.startsWith(prefix) && name.endsWith(".zip"))
+		.map((name) => name.slice(prefix.length, -".zip".length))
+		.toSorted((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+
+	return versions.length > 0
+		? join(directory, `${pluginId}-${versions[versions.length - 1]}.zip`)
+		: join(directory, `${pluginId}-1.0.0.zip`);
+}
+
 async function installMissingPlugins(api: Api, cookie: string): Promise<string[]> {
-	const before = await api.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie });
+	const before = await api.get<Array<{ id: string; version?: string; state: string }>>("/v1/admin/plugins", { cookie });
 	suite.expect(before.status === 200, `GET /admin/plugins -> ${before.status}`);
-	const installed = new Set(extractData<{ id: string; state: string }>(before.body).map((plugin) => plugin.id));
+	const installed = new Map(extractData<{ id: string; version?: string }>(before.body).map((plugin) => [plugin.id, plugin.version]));
+
 	for (const pluginId of PLUGIN_ZIPS) {
-		if (installed.has(pluginId)) continue;
-		const zipPath = join(PLUGINS_DIST, pluginId, `${pluginId}-1.0.0.zip`);
+		const targetVersion = readCatalogVersion(pluginId);
+		const installedVersion = installed.get(pluginId);
+		// Missing, or installed at an older build than the catalog just produced.
+		if (installedVersion !== undefined && (targetVersion === undefined || installedVersion === targetVersion)) continue;
+
+		const zipPath = resolvePluginZip(pluginId);
 		suite.expect(existsSync(zipPath), `missing dist zip: ${zipPath}`);
 		const form = new FormData();
 		form.append("file", Bun.file(zipPath));
@@ -122,12 +164,14 @@ async function installMissingPlugins(api: Api, cookie: string): Promise<string[]
 		);
 	}
 	const after = await api.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie });
-	const enabled = new Set(
-		extractData<{ id: string; state: string }>(after.body)
-			.filter((plugin) => plugin.state === "enabled")
-			.map((plugin) => plugin.id),
-	);
-	return PLUGIN_ZIPS.filter((pluginId) => enabled.has(pluginId));
+	return extractData<{ id: string }>(after.body).map((plugin) => plugin.id);
+}
+
+async function listEnabledPlugins(api: Api, cookie: string): Promise<string[]> {
+	const response = await api.get<Array<{ id: string; state: string }>>("/v1/admin/plugins", { cookie });
+	return extractData<{ id: string; state: string }>(response.body)
+		.filter((plugin) => plugin.state === "enabled")
+		.map((plugin) => plugin.id);
 }
 
 async function main(): Promise<void> {
@@ -190,9 +234,9 @@ async function main(): Promise<void> {
 		suite.expect(state.adminProfileId !== state.userAProfileId, "admin and user A share profile id");
 	});
 
-	await suite.case("all 8 plugins installed and enabled", async () => {
+	await suite.case("all 8 plugin packages installed", async () => {
 		state.installedPlugins = await installMissingPlugins(new Api(), state.adminCookie as string);
-		suite.expectEqual(state.installedPlugins.length, PLUGIN_ZIPS.length, "enabled plugin count");
+		suite.expectEqual(state.installedPlugins.length, PLUGIN_ZIPS.length, "installed plugin count");
 	});
 
 	await suite.case("tmdb plugin configured with api key", async (s) => {
@@ -205,15 +249,18 @@ async function main(): Promise<void> {
 		s.expect(response.status === 200, `PUT tmdb config -> ${response.status} ${JSON.stringify(response.body)}`);
 	});
 
-	await suite.case("omdb plugin configured with api key", async (s) => {
-		if (!keys.omdbApiKey) return s.expect(false, "OMDb key missing (set E2E_OMDB_KEY)");
-		const api = new Api();
-		const response = await api.put("/v1/admin/plugins/org.reelvault.omdb/config", {
-			cookie: state.adminCookie,
-			body: { apiKey: keys.omdbApiKey, plot: "full" },
-		});
-		s.expect(response.status === 200, `PUT omdb config -> ${response.status} ${JSON.stringify(response.body)}`);
-	});
+	await suite.case(
+		"omdb plugin configured with api key",
+		async (s) => {
+			const api = new Api();
+			const response = await api.put("/v1/admin/plugins/org.reelvault.omdb/config", {
+				cookie: state.adminCookie,
+				body: { apiKey: keys.omdbApiKey, plot: "full" },
+			});
+			s.expect(response.status === 200, `PUT omdb config -> ${response.status} ${JSON.stringify(response.body)}`);
+		},
+		keys.omdbApiKey ? undefined : "OMDb key missing (set E2E_OMDB_KEY)",
+	);
 
 	await suite.case("trailers + cinemamode configured", async (s) => {
 		const api = new Api();
@@ -229,6 +276,14 @@ async function main(): Promise<void> {
 			});
 			s.expect(cinema.status === 200, `PUT cinemamode config -> ${cinema.status}`);
 		}
+	});
+
+	// TMDB's provider refuses to initialize without a token, so a fresh install
+	// only reaches `enabled` after the config above triggers its reload.
+	await suite.case("all 8 plugins loaded and enabled", async () => {
+		const enabled = await listEnabledPlugins(new Api(), state.adminCookie as string);
+		state.installedPlugins = enabled;
+		suite.expectEqual(enabled.length, PLUGIN_ZIPS.length, "enabled plugin count");
 	});
 
 	await suite.case("test media generated", async (s) => {
