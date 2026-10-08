@@ -1,6 +1,6 @@
 {
 	"name": "Bug Reports",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"defaultLocale": "en",
 	"pages": [
 		{
@@ -20,6 +20,14 @@
 			"icon": "Bug",
 			"size": "lg",
 			"schemaRef": "./dist/ui/schema-report.json"
+		},
+		{
+			"id": "detail",
+			"title": { "en": "Manage report", "pl": "Zarządzaj zgłoszeniem" },
+			"icon": "Settings",
+			"size": "lg",
+			"adminOnly": true,
+			"schemaRef": "./dist/ui/schema-detail.json"
 		}
 	],
 	"slots": {
