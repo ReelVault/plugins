@@ -63,13 +63,14 @@ async function main(): Promise<void> {
 			const gone = await admin.get("/v1/plugins/org.reelvault.trailers/stats");
 			s.expect(gone.status === 404, `route after uninstall -> ${gone.status}`);
 		}
+		const catalog = await admin.get<Array<{ id: string; version?: string }>>("/v1/admin/plugins/catalog");
+		// The install downloads from the configured (remote) repository, so the
+		// requested version must be the one that catalog advertises — the local
+		// build version may not be published yet.
+		const trailersVersion = catalog.body.find((entry) => entry.id === "org.reelvault.trailers")?.version ?? "1.0.0";
 		const install = await admin.post<{ pluginId?: string }>("/v1/admin/plugins/catalog/install", {
 			cookie: state.adminCookie,
-			body: {
-				repositoryId: official.id,
-				pluginId: "org.reelvault.trailers",
-				version: readCatalogVersion("org.reelvault.trailers") ?? "1.0.0",
-			},
+			body: { repositoryId: official.id, pluginId: "org.reelvault.trailers", version: trailersVersion },
 		});
 		s.expect(install.status === 200 || install.status === 201, `catalog install -> ${install.status} ${JSON.stringify(install.body)}`);
 		await Bun.sleep(1_000);

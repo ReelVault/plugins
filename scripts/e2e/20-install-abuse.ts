@@ -21,17 +21,21 @@ function validManifest(): Record<string, unknown> {
 }
 
 async function upload(admin: Api, path: string): Promise<number> {
-	const form = new FormData();
-	form.append("file", Bun.file(path));
-	const response = await admin.post<object>("/v1/admin/plugins/install-upload", { form });
-	return response.status;
+	// The upload endpoint is rate-limited (10/min); wait out 429 like the
+	// other suites instead of failing the abuse cases.
+	for (let attempts = 0; attempts < 4; attempts++) {
+		const form = new FormData();
+		form.append("file", Bun.file(path));
+		const response = await admin.post<{ retryAfterSeconds?: number }>("/v1/admin/plugins/install-upload", { form });
+		if (response.status !== 429) return response.status;
+		await Bun.sleep(((response.body.retryAfterSeconds ?? 30) + 2) * 1_000);
+	}
+
+	return 429;
 }
 
 async function reinstall(admin: Api): Promise<number> {
-	const form = new FormData();
-	form.append("file", Bun.file(resolvePluginZip("org.reelvault.trailers")));
-	const response = await admin.post<object>("/v1/admin/plugins/install-upload", { form });
-	return response.status;
+	return await upload(admin, resolvePluginZip("org.reelvault.trailers"));
 }
 
 async function main(): Promise<void> {
@@ -133,14 +137,8 @@ async function main(): Promise<void> {
 		if (removed.status === 403) return;
 		const gone = await admin.get("/v1/plugins/org.reelvault.trailers/stats");
 		s.expect(gone.status === 404, `route after uninstall -> ${gone.status}`);
-		let reinstalled = await reinstall(admin);
-		let waits = 0;
-		while (reinstalled === 429 && waits < 3) {
-			waits += 1;
-			await Bun.sleep(20_000);
-			reinstalled = await reinstall(admin);
-		}
-		s.expect(reinstalled === 200 || reinstalled === 201, `reinstall -> ${reinstalled} after ${waits} waits`);
+		const reinstalled = await reinstall(admin);
+		s.expect(reinstalled === 200 || reinstalled === 201, `reinstall -> ${reinstalled}`);
 		await Bun.sleep(800);
 		const restored = await admin.get("/v1/plugins/org.reelvault.trailers/stats");
 		s.expect(restored.status === 200, `route after reinstall -> ${restored.status}`);
