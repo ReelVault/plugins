@@ -34,8 +34,11 @@ async function ensureMatchedLibraryFile(admin: Api, filename: string, title: str
 			const items = Array.isArray(response.body) ? response.body : (response.body.data ?? []);
 			const match = items.find((item) => item.metadataId && (item.fileName ?? "").includes(filename.replace(".mp4", "")));
 			if (!match) return null;
-			const metadata = await admin.get<{ title?: string }>(`/v1/metadata/${match.metadataId}`);
-			return metadata.body.title === title ? match.id : null;
+			const metadata = await admin.get<{ title?: string; originalTitle?: string | null }>(`/v1/metadata/${match.metadataId}`);
+			// The metadata paint is localized (the harness configures pl-PL), so the
+			// English fixture title matches `originalTitle`.
+			const matchedTitle = metadata.body.title === title || metadata.body.originalTitle === title;
+			return matchedTitle ? match.id : null;
 		},
 		`library match for ${filename}`,
 		150_000,

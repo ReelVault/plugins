@@ -1,9 +1,10 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { strToU8, zipSync } from "fflate";
 import { Api } from "./lib/client";
+import { resolvePluginZip } from "./lib/plugin-zips";
 import { ensure, Suite } from "./lib/report";
-import { PLUGINS_DIST, readState } from "./lib/state";
+import { readState } from "./lib/state";
 
 const suite = new Suite("20-install-abuse");
 
@@ -28,7 +29,7 @@ async function upload(admin: Api, path: string): Promise<number> {
 
 async function reinstall(admin: Api): Promise<number> {
 	const form = new FormData();
-	form.append("file", Bun.file(join(PLUGINS_DIST, "org.reelvault.trailers", "org.reelvault.trailers-1.0.0.zip")));
+	form.append("file", Bun.file(resolvePluginZip("org.reelvault.trailers")));
 	const response = await admin.post<object>("/v1/admin/plugins/install-upload", { form });
 	return response.status;
 }
@@ -36,6 +37,7 @@ async function reinstall(admin: Api): Promise<number> {
 async function main(): Promise<void> {
 	const state = ensure(readState(), "run 00-bootstrap first");
 	const admin = new Api().withCookie(state.adminCookie);
+	mkdirSync(TMP, { recursive: true });
 
 	await suite.case("garbage text file is rejected", async (s) => {
 		const path = join(TMP, "garbage.bin");
@@ -111,7 +113,7 @@ async function main(): Promise<void> {
 	});
 
 	await suite.case("duplicate upload of installed plugin upgrades idempotently", async (s) => {
-		const zipPath = join(PLUGINS_DIST, "org.reelvault.trailers", "org.reelvault.trailers-1.0.0.zip");
+		const zipPath = resolvePluginZip("org.reelvault.trailers");
 		const first = await upload(admin, zipPath);
 		const second = await upload(admin, zipPath);
 		s.expect(first === 200 || first === 201, `first upload -> ${first}`);

@@ -1,7 +1,7 @@
-import { join } from "node:path";
 import { Api } from "./lib/client";
+import { readCatalogVersion, resolvePluginZip } from "./lib/plugin-zips";
 import { ensure, Suite } from "./lib/report";
-import { PLUGINS_DIST, readState } from "./lib/state";
+import { readState } from "./lib/state";
 
 const suite = new Suite("23-upgrade-catalog");
 
@@ -24,7 +24,8 @@ async function main(): Promise<void> {
 		const requests = catalog.body.find((entry) => entry.id === "org.reelvault.requests");
 		s.expect(Boolean(requests), "requests missing from catalog");
 		s.expect(requests?.status === "installed", `catalog status: ${requests?.status}`);
-		s.expect(requests?.installedVersion === "1.0.0", `installedVersion: ${requests?.installedVersion}`);
+		const requestsVersion = readCatalogVersion("org.reelvault.requests") ?? "1.0.0";
+		s.expect(requests?.installedVersion === requestsVersion, `installedVersion: ${requests?.installedVersion}`);
 		s.expect(Boolean(requests?.repositoryId), "repositoryId missing from catalog entry");
 	});
 
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
 		});
 		s.expect(set.status === 200, `set config -> ${set.status}`);
 		const form = new FormData();
-		form.append("file", Bun.file(join(PLUGINS_DIST, "org.reelvault.webhooks", "org.reelvault.webhooks-1.0.0.zip")));
+		form.append("file", Bun.file(resolvePluginZip("org.reelvault.webhooks")));
 		const upgraded = await admin.post<{ upgraded?: boolean }>("/v1/admin/plugins/install-upload", { form });
 		s.expect(upgraded.status === 200 || upgraded.status === 201, `upgrade -> ${upgraded.status} ${JSON.stringify(upgraded.body)}`);
 		const read = await admin.get<{ config: Record<string, unknown> }>("/v1/admin/plugins/org.reelvault.webhooks/config", {
@@ -64,7 +65,11 @@ async function main(): Promise<void> {
 		}
 		const install = await admin.post<{ pluginId?: string }>("/v1/admin/plugins/catalog/install", {
 			cookie: state.adminCookie,
-			body: { repositoryId: official.id, pluginId: "org.reelvault.trailers", version: "1.0.0" },
+			body: {
+				repositoryId: official.id,
+				pluginId: "org.reelvault.trailers",
+				version: readCatalogVersion("org.reelvault.trailers") ?? "1.0.0",
+			},
 		});
 		s.expect(install.status === 200 || install.status === 201, `catalog install -> ${install.status} ${JSON.stringify(install.body)}`);
 		await Bun.sleep(1_000);

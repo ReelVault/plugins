@@ -1,6 +1,7 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { Api, expectWait, extractData, waitForHealth } from "./lib/client";
+import { readCatalogVersion, resolvePluginZip } from "./lib/plugin-zips";
 import { ensure, Suite } from "./lib/report";
 import { isSupervisorRunning } from "./lib/server";
 import {
@@ -15,7 +16,6 @@ import {
 	MOVIES_DIR,
 	type MovieInfo,
 	PLUGIN_ZIPS,
-	PLUGINS_DIST,
 	readState,
 	SERIES_DIR,
 	STAGING_DIR,
@@ -103,43 +103,6 @@ async function listMediaFiles(api: Api, cookie: string, libraryId: string): Prom
 	const response = await api.get("/v1/media-files", { cookie, query: { libraryId, pageSize: 100 } });
 	suite.expect(response.status === 200, `GET /v1/media-files -> ${response.status}`);
 	return extractData<{ id: string; metadataId?: string | null }>(response.body);
-}
-
-const CATALOG_PATH = join(PLUGINS_DIST, "..", "reelvault-catalog.json");
-
-/** Version the catalog build just packaged for a plugin, or undefined when unknown. */
-function readCatalogVersion(pluginId: string): string | undefined {
-	try {
-		const catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf8")) as { plugins?: Array<{ id?: string; version?: string }> };
-		return catalog.plugins?.find((plugin) => plugin.id === pluginId)?.version;
-	} catch {
-		return undefined;
-	}
-}
-
-/**
- * Newest built zip for a plugin: the version just published to the catalog,
- * falling back to the highest versioned zip on disk. The previous hardcoded
- * `-1.0.0.zip` kept installing stale packages after every version bump.
- */
-function resolvePluginZip(pluginId: string): string {
-	const directory = join(PLUGINS_DIST, pluginId);
-	const catalogVersion = readCatalogVersion(pluginId);
-	if (catalogVersion) {
-		const zipPath = join(directory, `${pluginId}-${catalogVersion}.zip`);
-		if (existsSync(zipPath)) return zipPath;
-	}
-
-	if (!existsSync(directory)) return join(directory, `${pluginId}-1.0.0.zip`);
-	const prefix = `${pluginId}-`;
-	const versions = readdirSync(directory)
-		.filter((name) => name.startsWith(prefix) && name.endsWith(".zip"))
-		.map((name) => name.slice(prefix.length, -".zip".length))
-		.toSorted((left, right) => left.localeCompare(right, undefined, { numeric: true }));
-
-	return versions.length > 0
-		? join(directory, `${pluginId}-${versions[versions.length - 1]}.zip`)
-		: join(directory, `${pluginId}-1.0.0.zip`);
 }
 
 async function installMissingPlugins(api: Api, cookie: string): Promise<string[]> {

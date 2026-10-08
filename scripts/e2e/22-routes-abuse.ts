@@ -1,7 +1,7 @@
-import { join } from "node:path";
 import { Api } from "./lib/client";
+import { resolvePluginZip } from "./lib/plugin-zips";
 import { ensure, Suite } from "./lib/report";
-import { PLUGINS_DIST, readState } from "./lib/state";
+import { readState } from "./lib/state";
 
 const suite = new Suite("22-routes-abuse");
 
@@ -9,7 +9,7 @@ async function ensureTrailersInstalled(admin: Api): Promise<boolean> {
 	const plugins = await admin.get<Array<{ id: string; state: string }>>("/v1/admin/plugins");
 	if (plugins.body.find((plugin) => plugin.id === "org.reelvault.trailers")?.state === "enabled") return true;
 	const form = new FormData();
-	form.append("file", Bun.file(join(PLUGINS_DIST, "org.reelvault.trailers", "org.reelvault.trailers-1.0.0.zip")));
+	form.append("file", Bun.file(resolvePluginZip("org.reelvault.trailers")));
 	const response = await admin.post<object>("/v1/admin/plugins/install-upload", { form });
 	return response.status === 200 || response.status === 201;
 }
