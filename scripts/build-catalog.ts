@@ -75,7 +75,7 @@ function stringArray(value: unknown): string[] | undefined {
 	return value.filter((item): item is string => typeof item === "string");
 }
 
-function parsePluginManifest(raw: string): PluginManifest {
+function parsePluginManifest(raw: string): { manifest: PluginManifest; source: Record<string, unknown> } {
 	const value: unknown = JSON.parse(raw);
 	if (!isRecord(value)) throw new Error("plugin.json must contain a JSON object");
 
@@ -91,7 +91,10 @@ function parsePluginManifest(raw: string): PluginManifest {
 	const capabilities = stringArray(value.capabilities);
 	if (capabilities !== undefined) manifest.capabilities = capabilities;
 
-	return manifest;
+	// Staging writes `source` back with only `entry` patched, so optional fields
+	// the server validates (csp, minServerVersion, homepage, ...) survive the
+	// build — a field whitelist here silently dropped every future addition.
+	return { manifest, source: value };
 }
 
 function parseCatalogSidecar(raw: string): CatalogSidecar {
@@ -291,7 +294,7 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 	.filter((entry) => entry.isDirectory())
 	.map((entry) => entry.name)) {
 	const sourceDir = join(PLUGINS_DIR, pluginDirName);
-	const manifest = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
+	const { manifest, source } = parsePluginManifest(await readFile(join(sourceDir, "plugin.json"), "utf8"));
 	const sidecar = await readCatalogSidecar(join(sourceDir, "catalog.json"));
 	const previous = previousEntries.find((candidate) => candidate.id === manifest.id);
 
@@ -340,8 +343,8 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 	await bundle(entrySource, stagingDir);
 	const bundledEntry = `./${manifest.entry.replace(/\.(ts|tsx)$/, ".js")}`;
 
-	const stagedManifest: PluginManifest = {
-		...manifest,
+	const stagedManifest = {
+		...source,
 		entry: bundledEntry,
 	};
 	await Bun.write(join(stagingDir, "plugin.json"), JSON.stringify(stagedManifest, null, "\t"));
