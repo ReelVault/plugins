@@ -39,6 +39,7 @@ fi
 echo "=== [4/4] Running suites ==="
 SUITES=(
 	00-bootstrap
+	05-web-shell
 	10-tmdb
 	11-omdb
 	12-media-requests
@@ -47,6 +48,7 @@ SUITES=(
 	15-trailers
 	16-webhooks
 	17-bug-reports
+	18-api-regressions
 	20-install-abuse
 	21-config-abuse
 	22-routes-abuse

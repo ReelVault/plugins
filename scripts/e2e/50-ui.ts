@@ -36,6 +36,7 @@ interface UiLocator {
 	first(): UiLocator;
 	count(): Promise<number>;
 	click(options?: Record<string, unknown>): Promise<void>;
+	fill(value: string, options?: Record<string, unknown>): Promise<void>;
 	textContent(options?: Record<string, unknown>): Promise<string | null>;
 }
 
@@ -165,12 +166,23 @@ const REPORT_DIALOG_PATTERN = /report|description|category/i;
 const TRAILER_LABEL_PATTERN = /trailer|zwiastun/i;
 const APPROVED_LABEL_PATTERN = /approved|zatwierdzon/i;
 const STALE_REQUEST_TITLE_PATTERN = /^(Dashboard Probe|Realtime UI|DASH FLOW|WS PROBE|SHADOW PROBE|Self Scope Probe)/;
+const ADMIN_NOTES_PATTERN = /admin notes|notatki administratora/i;
+const APP_ERROR_PATTERN = /Network request failed|Błąd aplikacji|Application error/i;
 
 async function cleanupStaleUserRequests(userA: Api): Promise<void> {
 	const response = await userA.get<{ requests?: Array<{ id: string; title: string }> }>("/v1/plugins/org.reelvault.requests/requests");
 	const stale = (response.body.requests ?? []).filter((request) => STALE_REQUEST_TITLE_PATTERN.test(request.title));
 	for (const request of stale) {
 		await userA.delete(`/v1/plugins/org.reelvault.requests/requests/${request.id}`);
+	}
+}
+
+async function cleanupBugReports(admin: Api): Promise<void> {
+	const response = await admin.get<{ reports?: Array<{ id: string }> }>("/v1/plugins/org.reelvault.bug-reports/reports", {
+		query: { scope: "all" },
+	});
+	for (const report of response.body.reports ?? []) {
+		await admin.delete(`/v1/plugins/org.reelvault.bug-reports/reports/${report.id}`);
 	}
 }
 
@@ -261,6 +273,39 @@ async function main(): Promise<void> {
 			await page.close();
 		});
 
+		await suite.case("admin bug-reports Manage dialog opens and persists admin notes", async (s) => {
+			await cleanupBugReports(admin);
+			const marker = `Manage probe ${(Math.random() + 1).toString(36).slice(2, 7)}`;
+			const created = await userA.post<{ report?: { id: string } }>("/v1/plugins/org.reelvault.bug-reports/reports", {
+				body: { title: `E2E UI Manage ${marker}`, category: "ui", severity: "low", description: "Manage dialog probe." },
+			});
+			s.expect(created.status === 201, `probe report -> ${created.status}`);
+			const reportId = created.body.report?.id ?? "";
+			s.expect(Boolean(reportId), "report id missing");
+
+			try {
+				const page = await adminContext.newPage();
+				await page.goto(`${BASE_URL}/admin/plugins/pages/org.reelvault.bug-reports`);
+				const listed = await pollContent(page, "E2E UI Manage", 25_000);
+				s.expect(listed, "probe report missing from the admin reports table");
+				await page.locator("button:has-text('Manage')").first().click();
+				const opened = await pollContent(page, "admin notes", 15_000, (text) => ADMIN_NOTES_PATTERN.test(text));
+				s.expect(opened, "Manage dialog did not open");
+				await page.locator("textarea").first().fill(marker);
+				await page.locator("button:has-text('Save')").first().click();
+				await Bun.sleep(2_500);
+				await page.screenshot({ path: join(SHOTS, "admin-bug-reports-manage.png"), fullPage: true });
+				await page.close();
+
+				const item = await admin.get<{ report?: { adminNotes?: string } }>(
+					`/v1/plugins/org.reelvault.bug-reports/reports/item/${reportId}`,
+				);
+				s.expect(item.body.report?.adminNotes === marker, `admin notes not persisted: ${JSON.stringify(item.body).slice(0, 160)}`);
+			} finally {
+				await cleanupBugReports(admin);
+			}
+		});
+
 		await suite.case("user dashboard renders media-requests coming-soon section", async (s) => {
 			const marker = `Dashboard Probe ${(Math.random() + 1).toString(36).slice(2, 7)}`;
 			const created = await userA.post<{ request?: { id: string } }>("/v1/plugins/org.reelvault.requests/requests", {
@@ -314,6 +359,26 @@ async function main(): Promise<void> {
 			s.expect(REPORT_DIALOG_PATTERN.test(content), "report dialog did not open");
 			await page.screenshot({ path: join(SHOTS, "user-overlay.png"), fullPage: true });
 			await page.close();
+		});
+
+		await suite.case("user watchlist page renders hydrated items without the app error", async (s) => {
+			const movie = ensure(state.movies[0], "bootstrap seeded no movies");
+			const profileHeaders = { "x-profile-id": state.userAProfileId };
+			const added = await userA.post("/v1/me/watchlist", { body: { metadataId: movie.metadataId }, headers: profileHeaders });
+			s.expect(added.status === 200, `watchlist add -> ${added.status}`);
+
+			try {
+				const page = await userContext.newPage();
+				await page.goto(`${BASE_URL}/watchlist`);
+				const visible = await pollContent(page, movie.title, 25_000);
+				s.expect(visible, `watchlist item "${movie.title}" missing`);
+				const content = await deepText(page);
+				s.expect(!APP_ERROR_PATTERN.test(content), "watchlist page rendered the app error state");
+				await page.screenshot({ path: join(SHOTS, "user-watchlist.png"), fullPage: true });
+				await page.close();
+			} finally {
+				await userA.delete(`/v1/me/watchlist/${movie.metadataId}`, { headers: profileHeaders });
+			}
 		});
 
 		await suite.case("details page shows trailers action with embed dialog", async (s) => {
