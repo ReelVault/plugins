@@ -168,6 +168,8 @@ const APPROVED_LABEL_PATTERN = /approved|zatwierdzon/i;
 const STALE_REQUEST_TITLE_PATTERN = /^(Dashboard Probe|Realtime UI|DASH FLOW|WS PROBE|SHADOW PROBE|Self Scope Probe)/;
 const ADMIN_NOTES_PATTERN = /admin notes|notatki administratora/i;
 const APP_ERROR_PATTERN = /Network request failed|Błąd aplikacji|Application error/i;
+const MANAGED_STATUS_PATTERN = /\bOpen\b/;
+const MANAGED_SEVERITY_PATTERN = /\bLow\b/;
 
 async function cleanupStaleUserRequests(userA: Api): Promise<void> {
 	const response = await userA.get<{ requests?: Array<{ id: string; title: string }> }>("/v1/plugins/org.reelvault.requests/requests");
@@ -291,6 +293,16 @@ async function main(): Promise<void> {
 				await page.locator("button:has-text('Manage')").first().click();
 				const opened = await pollContent(page, "admin notes", 15_000, (text) => ADMIN_NOTES_PATTERN.test(text));
 				s.expect(opened, "Manage dialog did not open");
+				// The data source path is templated and defaults come from async data —
+				// the dialog must show the report's current status/severity.
+				await Bun.sleep(1_500);
+				const dialogText = await page.evaluate<string>(
+					"(() => { const dialog = document.querySelector('[role=dialog]'); return dialog ? dialog.innerText : ''; })()",
+				);
+				s.expect(
+					MANAGED_STATUS_PATTERN.test(dialogText) && MANAGED_SEVERITY_PATTERN.test(dialogText),
+					`dialog did not reflect the report values: ${dialogText.slice(0, 140)}`,
+				);
 				await page.locator("textarea").first().fill(marker);
 				await page.locator("button:has-text('Save')").first().click();
 				await Bun.sleep(2_500);
