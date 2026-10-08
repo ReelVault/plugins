@@ -5,7 +5,7 @@
 		{
 			"id": "org.reelvault.bug-reports",
 			"name": "Bug Reports",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "User-facing bug reporting for playback, metadata and UI problems, with an admin management panel and notifications.",
 			"category": "other",
 			"capabilities": [
@@ -14,9 +14,17 @@
 				"jobs",
 				"notification"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.0.zip",
-			"checksum": "sha256-ce37e5306e51df5d668ff156c5f8c722e7ae0a4715b31649a974f0aa1f33cf2b",
-			"date": "2026-09-23T19:32:17.484Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.1.zip",
+			"checksum": "sha256-20ffe210edf86364e97be162b9118d82ce0de9e15457cc40725cce6eed7b8500",
+			"date": "2026-10-08T11:14:24.246Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.0.zip",
+					"checksum": "sha256-ce37e5306e51df5d668ff156c5f8c722e7ae0a4715b31649a974f0aa1f33cf2b",
+					"date": "2026-09-23T19:32:17.484Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.cinemamode",
@@ -80,15 +88,23 @@
 		{
 			"id": "org.reelvault.omdb",
 			"name": "OMDb Metadata Provider",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Metadata provider backed by the OMDb API (IMDb data).",
 			"category": "metadata",
 			"capabilities": [
 				"metadataProvider"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.0.zip",
-			"checksum": "sha256-922016dca0b26a2331efa340e852605585c5685b652de00f2b44c72a52a96fe3",
-			"date": "2026-09-23T19:32:17.228Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.1.zip",
+			"checksum": "sha256-6ebb246eca37d06b976b1b5a47571060682b8ff358b14761e2ced3230a3b112f",
+			"date": "2026-10-08T11:14:23.711Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.0.zip",
+					"checksum": "sha256-922016dca0b26a2331efa340e852605585c5685b652de00f2b44c72a52a96fe3",
+					"date": "2026-09-23T19:32:17.228Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.requests",
@@ -108,7 +124,7 @@
 				"metadataRead"
 			],
 			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.2.zip",
-			"checksum": "sha256-89c05ad93cc300789440e30d3d6f21050deb17247da3d77711659e792b998984",
+			"checksum": "sha256-db8acb25c729dd37473d04c29011066e26f3a76c66a2341862c77d283299c319",
 			"date": "2026-10-05T11:50:41.849Z",
 			"versions": [
 				{
@@ -128,16 +144,22 @@
 		{
 			"id": "org.reelvault.tmdb",
 			"name": "TMDB Metadata Provider",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "Metadata provider backed by The Movie Database API.",
 			"category": "metadata",
 			"capabilities": [
 				"metadataProvider"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.1.zip",
-			"checksum": "sha256-2682beafb3456bf77bc6745300ad0fe8d06ad948c222efc229629f244737b96a",
-			"date": "2026-09-30T19:15:24.759Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.2.zip",
+			"checksum": "sha256-8aa39b2c8c0a4206268e58b945c4c5a52112f7864c1f3ca61801100bfddcd623",
+			"date": "2026-10-08T11:14:23.071Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.1.zip",
+					"checksum": "sha256-2682beafb3456bf77bc6745300ad0fe8d06ad948c222efc229629f244737b96a",
+					"date": "2026-09-30T19:15:24.759Z"
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.0.zip",
@@ -149,7 +171,7 @@
 		{
 			"id": "org.reelvault.trailers",
 			"name": "Trailers",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "On-demand YouTube trailer search and playback for movies and series.",
 			"category": "integrations",
 			"capabilities": [
@@ -158,9 +180,17 @@
 				"httpFetch",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.0.zip",
-			"checksum": "sha256-991cdb48ae83e7bbb43e25cc1e89bef3361f845ae483e43d974daf89cd33d1ef",
-			"date": "2026-09-23T19:32:17.228Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.1.zip",
+			"checksum": "sha256-7951f35daf06f8ea6953a22a23aff20463d09c7d0ee724a42cb0af4a83683125",
+			"date": "2026-10-08T11:14:23.729Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.0.zip",
+					"checksum": "sha256-991cdb48ae83e7bbb43e25cc1e89bef3361f845ae483e43d974daf89cd33d1ef",
+					"date": "2026-09-23T19:32:17.228Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.webhooks",
