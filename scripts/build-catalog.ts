@@ -9,6 +9,9 @@
  *   2. build the ui/ bundle and compile ui/schema*.ts to JSON,
  *   3. patch plugin.json to point at the bundled entry,
  *   4. zip it, hash it, append a catalog entry.
+ *
+ * A version that is already packaged in dist/ is reused as-is, never rebuilt:
+ * installed clients verify its checksum. Changed sources ship with a version bump.
  */
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
@@ -24,6 +27,11 @@ const CATALOG_FILE_NAME = "reelvault-catalog.json";
 const BASE_URL = (process.env.CATALOG_BASE_URL ?? "https://raw.githubusercontent.com/ReelVault/plugins/main/dist").replace(/\/$/, "");
 const SCHEMA_FILE_PATTERN = /^schema(-[a-z0-9]+)?\.ts$/;
 const TYPESCRIPT_EXTENSION_PATTERN = /\.ts$/;
+/**
+ * Fixed zip timestamp. Local time on purpose: zip stores local date fields, so
+ * this reads back the same in every timezone.
+ */
+const REPRODUCIBLE_MTIME = new Date(2020, 0, 1);
 
 interface CatalogSidecar {
 	category?: string;
@@ -164,28 +172,6 @@ async function archivedChecksums(pluginId: string): Promise<Map<string, string>>
 	return checksums;
 }
 
-/**
- * Newest source modification time of a plugin (recursively, skipping build
- * output and dependency folders). Compared against the packaged zip's mtime to
- * skip repackaging plugins whose sources have not changed since.
- */
-async function newestSourceMtime(sourceDir: string): Promise<number> {
-	const SKIP = new Set(["node_modules", "dist", ".git"]);
-	let newest = 0;
-	for (const entry of await readdir(sourceDir, { withFileTypes: true })) {
-		if (SKIP.has(entry.name)) continue;
-
-		const path = join(sourceDir, entry.name);
-		if (entry.isDirectory()) {
-			newest = Math.max(newest, await newestSourceMtime(path));
-		} else {
-			newest = Math.max(newest, (await stat(path)).mtimeMs);
-		}
-	}
-
-	return newest;
-}
-
 async function* walk(directory: string): AsyncGenerator<[string, Uint8Array]> {
 	for (const entry of await readdir(directory, { withFileTypes: true })) {
 		const path = join(directory, entry.name);
@@ -313,9 +299,9 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 		...(manifest.capabilities ? { capabilities: manifest.capabilities } : {}),
 	};
 
-	// A zip newer than every source file is already the current release —
-	// repackaging would only churn timestamps (and burn CI minutes).
-	if ((await Bun.file(zipPath).exists()) && (await stat(zipPath)).mtimeMs >= (await newestSourceMtime(sourceDir))) {
+	// A packaged version is never rebuilt: its checksum is what clients verify, and
+	// a rebuild would change it. Source changes need a version bump to be released.
+	if (await Bun.file(zipPath).exists()) {
 		const zip = await readFile(zipPath);
 		catalogEntries.push({
 			...entryBase,
@@ -323,7 +309,7 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 			checksum: `sha256-${createHash("sha256").update(zip).digest("hex")}`,
 			date: resolveEntryDate(previous, manifest.version),
 		});
-		console.log(`already packaged ${manifest.id}@${manifest.version} (sources unchanged)`);
+		console.log(`kept ${manifest.id}@${manifest.version} (already packaged; bump the version to release changes)`);
 		continue;
 	}
 
@@ -360,11 +346,16 @@ for (const pluginDirName of (await readdir(PLUGINS_DIR, { withFileTypes: true })
 	const uiDist = await resolveUiDist(sourceDir);
 	if (uiDist) await stageUiAssets(uiDist, stagingDir);
 
-	const files: Record<string, Uint8Array> = {};
+	const entries: Array<[string, Uint8Array]> = [];
 	for await (const [path, bytes] of walk(stagingDir)) {
-		files[`${manifest.id}/${path.slice(stagingDir.length + 1).replaceAll("\\", "/")}`] = bytes;
+		entries.push([`${manifest.id}/${path.slice(stagingDir.length + 1).replaceAll("\\", "/")}`, bytes]);
 	}
-	const zip = zipSync(files);
+	// The same sources must always give the same bytes. fflate stamps every entry
+	// with the current time by default, and directory order differs per filesystem,
+	// so without this each rebuild changed the checksum. Paths are unique, so the
+	// comparison never returns 0; code-unit order keeps it locale-independent.
+	entries.sort((left, right) => (left[0] < right[0] ? -1 : 1));
+	const zip = zipSync(Object.fromEntries(entries), { mtime: REPRODUCIBLE_MTIME });
 	const checksum = `sha256-${createHash("sha256").update(zip).digest("hex")}`;
 	await mkdir(join(DIST_PLUGINS_DIR, manifest.id), { recursive: true });
 	await Bun.write(zipPath, zip);
