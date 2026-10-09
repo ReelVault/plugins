@@ -1,5 +1,5 @@
 export type SegmentType = "intro" | "credits" | "recap" | "chapter" | "highlight";
-export type SegmentStatus = "pending" | "approved" | "rejected";
+export type SegmentStatus = "pending" | "approved" | "rejected" | "hidden";
 
 /** Projection returned by the user-facing `/segments` routes. */
 export interface PublicSegment {

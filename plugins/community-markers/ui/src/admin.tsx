@@ -1,10 +1,11 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { detach } from "./detach";
 import { usePluginHost } from "./host-context";
+import { errorText, getMessages } from "./messages";
 import type { AdminSegment, SegmentStatus, SegmentType } from "./types";
 
 const TYPES: SegmentType[] = ["intro", "credits", "recap", "chapter", "highlight"];
-const STATUSES: SegmentStatus[] = ["pending", "approved", "rejected"];
+const STATUSES: SegmentStatus[] = ["pending", "approved", "rejected", "hidden"];
 
 const SEGMENT_TYPES: ReadonlySet<string> = new Set(TYPES);
 const SEGMENT_STATUSES: ReadonlySet<string> = new Set(STATUSES);
@@ -26,6 +27,7 @@ function formatTime(seconds: number): string {
 
 export function CommunityMarkersAdmin() {
 	const host = usePluginHost();
+	const messages = getMessages(host.context.locale);
 	const [segments, setSegments] = useState<AdminSegment[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -38,23 +40,38 @@ export function CommunityMarkersAdmin() {
 			setSegments(result.segments);
 			setError("");
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load segments");
+			setError(errorText(messages, err, messages.loadFailed));
 		} finally {
 			setLoading(false);
 		}
-	}, [host]);
+	}, [host, messages]);
 
 	useEffect(() => {
 		detach(load());
 	}, [load]);
 
+	// Quick decision: an administrator's status change locks the segment against further votes.
+	const decide = async (segment: AdminSegment, status: SegmentStatus): Promise<void> => {
+		try {
+			await host.api.call("/admin/segments", {
+				method: "PATCH",
+				query: { id: segment.id, mediaFileId: segment.mediaFileId },
+				body: { status },
+			});
+			host.toast("success", messages.segmentUpdated);
+			await load();
+		} catch (err) {
+			host.toast("error", errorText(messages, err, messages.updateFailed));
+		}
+	};
+
 	const remove = async (segment: AdminSegment): Promise<void> => {
 		try {
 			await host.api.call("/admin/segments", { method: "DELETE", query: { id: segment.id, mediaFileId: segment.mediaFileId } });
-			host.toast("success", "Segment deleted");
+			host.toast("success", messages.segmentDeleted);
 			await load();
 		} catch (err) {
-			host.toast("error", err instanceof Error ? err.message : "Delete failed");
+			host.toast("error", errorText(messages, err, messages.deleteFailed));
 		}
 	};
 
@@ -62,9 +79,9 @@ export function CommunityMarkersAdmin() {
 
 	let body: ReactNode;
 	if (loading) {
-		body = <p className="muted">Loading…</p>;
+		body = <p className="muted">{messages.loading}</p>;
 	} else if (filtered.length === 0) {
-		body = <div className="empty">No segments.</div>;
+		body = <div className="empty">{messages.noSegments}</div>;
 	} else {
 		body = (
 			<div className="list">
@@ -72,9 +89,9 @@ export function CommunityMarkersAdmin() {
 					<div key={segment.id} className="seg">
 						<div className="seg-main">
 							<div className="row" style={{ gap: "0.35rem" }}>
-								<span className="badge">{segment.type}</span>
-								<span className={`badge ${segment.status}`}>{segment.status}</span>
-								<span className="muted">score {segment.score}</span>
+								<span className="badge">{messages.types[segment.type]}</span>
+								<span className={`badge ${segment.status}`}>{messages.statuses[segment.status]}</span>
+								<span className="muted">{messages.score(segment.score)}</span>
 								{segment.label ? <span>{segment.label}</span> : null}
 							</div>
 							<span className="muted">
@@ -82,11 +99,21 @@ export function CommunityMarkersAdmin() {
 							</span>
 						</div>
 						<div className="row" style={{ gap: "0.35rem" }}>
+							{segment.status === "approved" ? null : (
+								<button type="button" className="primary" onClick={() => detach(decide(segment, "approved"))}>
+									{messages.confirm}
+								</button>
+							)}
+							{segment.status === "rejected" ? null : (
+								<button type="button" onClick={() => detach(decide(segment, "rejected"))}>
+									{messages.reject}
+								</button>
+							)}
 							<button type="button" onClick={() => setEditing(segment)}>
-								Edit
+								{messages.edit}
 							</button>
 							<button type="button" className="danger" onClick={() => detach(remove(segment))}>
-								Delete
+								{messages.delete}
 							</button>
 						</div>
 					</div>
@@ -101,7 +128,7 @@ export function CommunityMarkersAdmin() {
 
 			<div className="row">
 				<label htmlFor="filter" style={{ margin: 0 }}>
-					Status
+					{messages.status}
 				</label>
 				<select
 					id="filter"
@@ -112,14 +139,14 @@ export function CommunityMarkersAdmin() {
 					}}
 					style={{ width: "auto" }}
 				>
-					<option value="all">all</option>
+					<option value="all">{messages.statusAll}</option>
 					{STATUSES.map((value) => (
 						<option key={value} value={value}>
-							{value}
+							{messages.statuses[value]}
 						</option>
 					))}
 				</select>
-				<span className="muted">{filtered.length} segments</span>
+				<span className="muted">{messages.segmentCount(filtered.length)}</span>
 			</div>
 
 			{editing ? (
@@ -140,6 +167,7 @@ export function CommunityMarkersAdmin() {
 
 function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose: () => void; onSaved: () => Promise<void> }) {
 	const host = usePluginHost();
+	const messages = getMessages(host.context.locale);
 	const [type, setType] = useState<SegmentType>(segment.type);
 	const [start, setStart] = useState(segment.startSeconds);
 	const [end, setEnd] = useState(segment.endSeconds);
@@ -155,10 +183,10 @@ function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose:
 				query: { id: segment.id, mediaFileId: segment.mediaFileId },
 				body: { type, startSeconds: start, endSeconds: end, label, status },
 			});
-			host.toast("success", "Segment updated");
+			host.toast("success", messages.segmentUpdated);
 			await onSaved();
 		} catch (err) {
-			host.toast("error", err instanceof Error ? err.message : "Update failed");
+			host.toast("error", errorText(messages, err, messages.updateFailed));
 		} finally {
 			setSaving(false);
 		}
@@ -166,10 +194,10 @@ function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose:
 
 	return (
 		<div className="panel">
-			<h2>Edit segment</h2>
+			<h2>{messages.editSegment}</h2>
 			<div className="grid2">
 				<div>
-					<label htmlFor="e-type">Type</label>
+					<label htmlFor="e-type">{messages.type}</label>
 					<select
 						id="e-type"
 						value={type}
@@ -180,13 +208,13 @@ function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose:
 					>
 						{TYPES.map((value) => (
 							<option key={value} value={value}>
-								{value}
+								{messages.types[value]}
 							</option>
 						))}
 					</select>
 				</div>
 				<div>
-					<label htmlFor="e-status">Status</label>
+					<label htmlFor="e-status">{messages.status}</label>
 					<select
 						id="e-status"
 						value={status}
@@ -197,17 +225,17 @@ function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose:
 					>
 						{STATUSES.map((value) => (
 							<option key={value} value={value}>
-								{value}
+								{messages.statuses[value]}
 							</option>
 						))}
 					</select>
 				</div>
 				<div>
-					<label htmlFor="e-start">Start (seconds)</label>
+					<label htmlFor="e-start">{messages.startSeconds}</label>
 					<input id="e-start" type="number" step="0.1" min="0" value={start} onChange={(event) => setStart(Number(event.target.value))} />
 				</div>
 				<div>
-					<label htmlFor="e-end">End (seconds)</label>
+					<label htmlFor="e-end">{messages.endSeconds}</label>
 					<input
 						id="e-end"
 						type="number"
@@ -219,14 +247,14 @@ function Editor({ segment, onClose, onSaved }: { segment: AdminSegment; onClose:
 					/>
 				</div>
 			</div>
-			<label htmlFor="e-label">Label</label>
+			<label htmlFor="e-label">{messages.label}</label>
 			<input id="e-label" value={label} onChange={(event) => setLabel(event.target.value)} />
 			<div className="row" style={{ marginTop: "0.75rem", justifyContent: "flex-end" }}>
 				<button type="button" onClick={onClose}>
-					Cancel
+					{messages.cancel}
 				</button>
 				<button type="button" className="primary" disabled={saving} onClick={() => detach(save())}>
-					{saving ? "Saving…" : "Save"}
+					{saving ? messages.saving : messages.save}
 				</button>
 			</div>
 		</div>

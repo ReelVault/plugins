@@ -1,6 +1,7 @@
 import { type ReactNode, type SyntheticEvent, useCallback, useEffect, useState } from "react";
 import { detach } from "./detach";
 import { usePluginHost } from "./host-context";
+import { errorText, getMessages } from "./messages";
 import type { PublicSegment, SegmentType } from "./types";
 
 const TYPES: SegmentType[] = ["intro", "credits", "recap", "chapter", "highlight"];
@@ -22,6 +23,7 @@ function formatTime(seconds: number): string {
 
 export function CommunityMarkersDialog() {
 	const host = usePluginHost();
+	const messages = getMessages(host.context.locale);
 	const [mediaFileId, setMediaFileId] = useState("");
 	const [segments, setSegments] = useState<PublicSegment[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export function CommunityMarkersDialog() {
 		async (fileId: string): Promise<void> => {
 			if (!fileId) {
 				setLoading(false);
-				setError("No media file is playing.");
+				setError(messages.noMediaPlaying);
 				return;
 			}
 			try {
@@ -46,12 +48,12 @@ export function CommunityMarkersDialog() {
 				setSegments(result);
 				setError("");
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to load community markers");
+				setError(errorText(messages, err, messages.loadFailed));
 			} finally {
 				setLoading(false);
 			}
 		},
-		[host],
+		[host, messages],
 	);
 
 	useEffect(() => {
@@ -80,7 +82,7 @@ export function CommunityMarkersDialog() {
 		event.preventDefault();
 		const effectiveEnd = type === "highlight" ? start : end;
 		if (type !== "highlight" && effectiveEnd <= start) {
-			setError("The end time must be after the start time.");
+			setError(messages.endAfterStart);
 			return;
 		}
 		setBusy(true);
@@ -89,12 +91,12 @@ export function CommunityMarkersDialog() {
 				method: "POST",
 				body: { mediaFileId, type, startSeconds: start, endSeconds: effectiveEnd, ...(label.trim() ? { label: label.trim() } : {}) },
 			});
-			host.toast("success", "Marker submitted");
+			host.toast("success", messages.markerSubmitted);
 			setLabel("");
 			setTab("list");
 			await load(mediaFileId);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to submit the marker");
+			setError(errorText(messages, err, messages.submitFailed));
 		} finally {
 			setBusy(false);
 		}
@@ -110,26 +112,26 @@ export function CommunityMarkersDialog() {
 			});
 			await load(mediaFileId);
 		} catch (err) {
-			host.toast("error", err instanceof Error ? err.message : "Vote failed");
+			host.toast("error", errorText(messages, err, messages.voteFailed));
 		}
 	};
 
 	const remove = async (segment: PublicSegment): Promise<void> => {
 		try {
 			await host.api.call("/segments", { method: "DELETE", query: { id: segment.id, mediaFileId } });
-			host.toast("success", "Marker removed");
+			host.toast("success", messages.markerRemoved);
 			await load(mediaFileId);
 		} catch (err) {
-			host.toast("error", err instanceof Error ? err.message : "Delete failed");
+			host.toast("error", errorText(messages, err, messages.deleteFailed));
 		}
 	};
 
 	let content: ReactNode;
 	if (tab === "list") {
 		if (loading) {
-			content = <p className="muted">Loading…</p>;
+			content = <p className="muted">{messages.loading}</p>;
 		} else if (segments.length === 0) {
-			content = <div className="empty">No community markers for this video yet.</div>;
+			content = <div className="empty">{messages.noMarkers}</div>;
 		} else {
 			content = (
 				<div className="list">
@@ -137,8 +139,8 @@ export function CommunityMarkersDialog() {
 						<div key={segment.id} className="seg">
 							<div className="seg-main">
 								<div className="row" style={{ gap: "0.35rem" }}>
-									<span className="badge">{segment.type}</span>
-									<span className={`badge ${segment.status}`}>{segment.status}</span>
+									<span className="badge">{messages.types[segment.type]}</span>
+									<span className={`badge ${segment.status}`}>{messages.statuses[segment.status]}</span>
 									{segment.label ? <span>{segment.label}</span> : null}
 								</div>
 								<span className="muted">
@@ -146,23 +148,34 @@ export function CommunityMarkersDialog() {
 										? formatTime(segment.startSeconds)
 										: `${formatTime(segment.startSeconds)} – ${formatTime(segment.endSeconds)}`}
 								</span>
+								{segment.status === "hidden" ? <span className="muted">{messages.hiddenHint}</span> : null}
 							</div>
 							<div className="row" style={{ gap: "0.35rem" }}>
 								<button type="button" onClick={() => host.seek(segment.startSeconds)}>
-									Play
+									{messages.play}
 								</button>
 								<div className="votes">
-									<button type="button" className={segment.userVote === 1 ? "on" : ""} onClick={() => detach(vote(segment, 1))}>
+									<button
+										type="button"
+										className={segment.userVote === 1 ? "on" : ""}
+										disabled={segment.status === "hidden"}
+										onClick={() => detach(vote(segment, 1))}
+									>
 										▲
 									</button>
 									<span>{segment.score > 0 ? `+${segment.score}` : segment.score}</span>
-									<button type="button" className={segment.userVote === -1 ? "on" : ""} onClick={() => detach(vote(segment, -1))}>
+									<button
+										type="button"
+										className={segment.userVote === -1 ? "on" : ""}
+										disabled={segment.status === "hidden"}
+										onClick={() => detach(vote(segment, -1))}
+									>
 										▼
 									</button>
 								</div>
 								{segment.isMine ? (
 									<button type="button" className="danger" onClick={() => detach(remove(segment))}>
-										Delete
+										{messages.delete}
 									</button>
 								) : null}
 							</div>
@@ -174,7 +187,7 @@ export function CommunityMarkersDialog() {
 	} else {
 		content = (
 			<form className="panel" onSubmit={(event) => detach(submit(event))}>
-				<label htmlFor="type">Segment type</label>
+				<label htmlFor="type">{messages.segmentType}</label>
 				<select
 					id="type"
 					value={type}
@@ -185,25 +198,25 @@ export function CommunityMarkersDialog() {
 				>
 					{TYPES.map((value) => (
 						<option key={value} value={value}>
-							{value}
+							{messages.types[value]}
 						</option>
 					))}
 				</select>
 
 				{type === "highlight" ? (
 					<>
-						<label htmlFor="point">Time (seconds)</label>
+						<label htmlFor="point">{messages.time}</label>
 						<div className="row">
 							<input id="point" type="number" step="0.1" min="0" value={start} onChange={(event) => setStart(Number(event.target.value))} />
 							<button type="button" onClick={() => pickNow("start")}>
-								Now
+								{messages.now}
 							</button>
 						</div>
 					</>
 				) : (
 					<div className="grid2">
 						<div>
-							<label htmlFor="start">Start (seconds)</label>
+							<label htmlFor="start">{messages.startSeconds}</label>
 							<div className="row">
 								<input
 									id="start"
@@ -214,28 +227,28 @@ export function CommunityMarkersDialog() {
 									onChange={(event) => setStart(Number(event.target.value))}
 								/>
 								<button type="button" onClick={() => pickNow("start")}>
-									Now
+									{messages.now}
 								</button>
 							</div>
 						</div>
 						<div>
-							<label htmlFor="end">End (seconds)</label>
+							<label htmlFor="end">{messages.endSeconds}</label>
 							<div className="row">
 								<input id="end" type="number" step="0.1" min="0" value={end} onChange={(event) => setEnd(Number(event.target.value))} />
 								<button type="button" onClick={() => pickNow("end")}>
-									Now
+									{messages.now}
 								</button>
 							</div>
 						</div>
 					</div>
 				)}
 
-				<label htmlFor="label">Description (optional)</label>
+				<label htmlFor="label">{messages.descriptionOptional}</label>
 				<input id="label" maxLength={100} value={label} onChange={(event) => setLabel(event.target.value)} />
 
 				<div className="row" style={{ marginTop: "0.75rem", justifyContent: "flex-end" }}>
 					<button type="submit" className="primary" disabled={busy}>
-						{busy ? "Submitting…" : "Submit marker"}
+						{busy ? messages.submitting : messages.submitMarker}
 					</button>
 				</div>
 			</form>
@@ -246,10 +259,10 @@ export function CommunityMarkersDialog() {
 		<div className="page">
 			<div className="tabs">
 				<button type="button" className={tab === "list" ? "active" : ""} onClick={() => setTab("list")}>
-					Markers ({segments.length})
+					{messages.markersTab(segments.length)}
 				</button>
 				<button type="button" className={tab === "create" ? "active" : ""} onClick={() => setTab("create")}>
-					Report new
+					{messages.reportNew}
 				</button>
 			</div>
 

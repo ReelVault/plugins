@@ -1,5 +1,6 @@
 import { definePlugin } from "@reelvault/sdk/plugin";
 import { config } from "./config";
+import { deleteRefusal, isVisibleTo, statusAfterVote, type VoteRules } from "./src/moderation";
 import type { CreateSegmentRequest, SegmentSubmission, SegmentType, UpdateSegmentRequest, VoteSegmentRequest } from "./types";
 
 const REGISTERED_FILES_KEY = "registered_media_files";
@@ -14,7 +15,7 @@ function isSegmentType(value: unknown): value is SegmentType {
 }
 
 function isSegmentStatus(value: unknown): value is SegmentSubmission["status"] {
-	return value === "pending" || value === "approved" || value === "rejected";
+	return value === "pending" || value === "approved" || value === "rejected" || value === "hidden";
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -86,11 +87,13 @@ function toPublicSegment(segment: SegmentSubmission, user: { id: string }) {
 
 export default definePlugin(config, {
 	async setup(host) {
-		const { approvalThreshold, rejectionThreshold, autoApprove } = host.config;
+		const { approvalThreshold, rejectionThreshold, autoApprove, downvotesToHide } = host.config;
+		const rules: VoteRules = { approvalThreshold, rejectionThreshold, autoApprove, downvotesToHide };
 
 		host.logger.info("Community Markers plugin initialized", {
 			approvalThreshold,
 			rejectionThreshold,
+			downvotesToHide,
 			autoApprove,
 		});
 
@@ -131,7 +134,8 @@ export default definePlugin(config, {
 			}
 		}
 
-		// Helper to sync approved segments into ReelVault's native media_markers table
+		// Helper to sync approved segments into ReelVault's native media_markers table.
+		// It reads the segments back from storage, so callers must store their changes first.
 		async function syncApprovedMarkers(mediaFileId: string): Promise<void> {
 			try {
 				const storageKey = `media_segments_${mediaFileId}`;
@@ -165,15 +169,15 @@ export default definePlugin(config, {
 			handler: async ({ query, user }) => {
 				const mediaFileId = query.mediaFileId;
 				if (!mediaFileId) {
-					return { body: { error: "The mediaFileId parameter is required." } };
+					return { status: 400, body: { code: "segment.media_required" } };
 				}
 
 				const storageKey = `media_segments_${mediaFileId}`;
 				const stored = await host.storage.get(storageKey);
 				const segments = isSegmentSubmissionArray(stored) ? stored : [];
 
-				// Projection without submitter/voter identities (info-leak).
-				const result = segments.map((s) => toPublicSegment(s, user));
+				// Projection without submitter/voter identities (info-leak). Hidden segments stay out of the list.
+				const result = segments.filter((s) => isVisibleTo(s, user)).map((s) => toPublicSegment(s, user));
 
 				return { body: result };
 			},
@@ -186,13 +190,13 @@ export default definePlugin(config, {
 			handler: async ({ body, user }) => {
 				const data = parseCreateSegmentRequest(body);
 				if (!data) {
-					return { body: { error: "Invalid segment submission data." } };
+					return { status: 400, body: { code: "segment.invalid" } };
 				}
 
 				// Only submit for files that actually exist in the library.
 				const mediaFile = await host.media.get(data.mediaFileId);
 				if (!mediaFile) {
-					return { status: 404, body: { error: "The given mediaFileId does not exist in the library." } };
+					return { status: 404, body: { code: "segment.media_not_found" } };
 				}
 
 				if (data.type === "highlight") {
@@ -200,7 +204,7 @@ export default definePlugin(config, {
 				}
 
 				if (data.startSeconds < 0 || (data.type !== "highlight" && data.endSeconds <= data.startSeconds)) {
-					return { body: { error: "End time must be greater than the start time." } };
+					return { status: 400, body: { code: "segment.range_invalid" } };
 				}
 
 				try {
@@ -262,7 +266,7 @@ export default definePlugin(config, {
 				} catch (err) {
 					// Storage overflow (64 KiB per key) and similar failures must not 500 raw.
 					host.logger.error("Failed to store community segment", err, { mediaFileId: data.mediaFileId });
-					return { status: 507, body: { error: "Could not save the submission (plugin storage limit?). Try again later." } };
+					return { status: 507, body: { code: "segment.storage_full" } };
 				}
 			},
 		});
@@ -277,10 +281,10 @@ export default definePlugin(config, {
 				const voteData = parseVoteSegmentRequest(body);
 
 				if (!(segmentId && mediaFileId && voteData)) {
-					return { body: { error: "Required parameters: id, mediaFileId and value (-1, 0, 1)." } };
+					return { status: 400, body: { code: "segment.vote_params_required" } };
 				}
 
-				const updatedSegment = await withMediaFileLock(mediaFileId, async () => {
+				const voted = await withMediaFileLock(mediaFileId, async () => {
 					const storageKey = `media_segments_${mediaFileId}`;
 					const stored = await host.storage.get(storageKey);
 					const segments = isSegmentSubmissionArray(stored) ? stored : [];
@@ -301,31 +305,37 @@ export default definePlugin(config, {
 					segment.score = segment.upvotes.length - segment.downvotes.length;
 					segment.updatedAt = new Date().toISOString();
 
-					// Check for rejection (2 downvotes, or score below the threshold)
-					const isRejected = segment.downvotes.length >= 2 || segment.score <= rejectionThreshold;
+					const previousStatus = segment.status;
+					segment.status = statusAfterVote(segment, rules);
 
-					if (isRejected) {
-						if (segment.status !== "rejected") {
-							segment.status = "rejected";
-							await syncApprovedMarkers(mediaFileId);
-							host.realtime.broadcast("segment:rejected", toPublicSegment(segment, user));
-						}
-					} else if (
-						segment.status === "rejected" ||
-						(segment.status === "pending" && (autoApprove || segment.score >= approvalThreshold))
-					) {
-						// If not rejected and autoApprove is on, or score >= approvalThreshold
-						segment.status = "approved";
+					// Store first: the marker sync reads the segments back from storage.
+					await host.storage.set(storageKey, segments);
+					if (segment.status !== previousStatus) {
 						await syncApprovedMarkers(mediaFileId);
-						host.realtime.broadcast("segment:approved", toPublicSegment(segment, user));
 					}
 
-					await host.storage.set(storageKey, segments);
-					return segment;
+					return { segment, previousStatus };
 				});
 
-				if (!updatedSegment) {
-					return { body: { error: "Submitted segment not found." } };
+				if (!voted) {
+					return { status: 404, body: { code: "segment.not_found" } };
+				}
+
+				const { segment: updatedSegment, previousStatus } = voted;
+				if (updatedSegment.status !== previousStatus) {
+					if (updatedSegment.status === "hidden") {
+						// Hidden segments are announced without their content: only identifiers and status.
+						host.realtime.broadcast("segment:hidden", {
+							id: updatedSegment.id,
+							mediaFileId,
+							score: updatedSegment.score,
+							status: updatedSegment.status,
+						});
+					} else if (updatedSegment.status === "rejected") {
+						host.realtime.broadcast("segment:rejected", toPublicSegment(updatedSegment, user));
+					} else if (updatedSegment.status === "approved") {
+						host.realtime.broadcast("segment:approved", toPublicSegment(updatedSegment, user));
+					}
 				}
 
 				host.realtime.broadcast("segment:voted", {
@@ -350,7 +360,7 @@ export default definePlugin(config, {
 				const mediaFileId = query.mediaFileId;
 
 				if (!(segmentId && mediaFileId)) {
-					return { body: { error: "Wymagane parametry id i mediaFileId." } };
+					return { status: 400, body: { code: "segment.params_required" } };
 				}
 
 				const wasApproved = await withMediaFileLock(mediaFileId, async () => {
@@ -364,9 +374,8 @@ export default definePlugin(config, {
 					const segment = segments[index];
 					if (!segment) return null;
 
-					if (segment.submittedByUserId !== user.id && user.role !== "admin") {
-						return "forbidden" as const;
-					}
+					const refusal = deleteRefusal(segment, user);
+					if (refusal) return refusal;
 
 					const approved = segment.status === "approved";
 					segments.splice(index, 1);
@@ -375,10 +384,13 @@ export default definePlugin(config, {
 				});
 
 				if (wasApproved === null) {
-					return { body: { error: "Nie znaleziono segmentu." } };
+					return { status: 404, body: { code: "segment.not_found" } };
 				}
 				if (wasApproved === "forbidden") {
-					return { body: { error: "You do not have permission to delete this report." } };
+					return { status: 403, body: { code: "segment.forbidden" } };
+				}
+				if (wasApproved === "locked") {
+					return { status: 409, body: { code: "segment.locked" } };
 				}
 
 				if (wasApproved) {
@@ -435,7 +447,7 @@ export default definePlugin(config, {
 				const updateData = parseUpdateSegmentRequest(body);
 
 				if (!(segmentId && mediaFileId && updateData)) {
-					return { body: { error: "The id and mediaFileId parameters are required." } };
+					return { status: 400, body: { code: "segment.params_required" } };
 				}
 
 				const storageKey = `media_segments_${mediaFileId}`;
@@ -444,7 +456,7 @@ export default definePlugin(config, {
 				const segment = segments.find((s) => s.id === segmentId);
 
 				if (!segment) {
-					return { body: { error: "Nie znaleziono segmentu." } };
+					return { status: 404, body: { code: "segment.not_found" } };
 				}
 
 				if (updateData.type) {
@@ -469,11 +481,19 @@ export default definePlugin(config, {
 					segment.status = updateData.status;
 				}
 
+				// Any administrator edit is a decision: community votes no longer change this segment.
+				segment.lockedByAdmin = true;
 				segment.updatedAt = new Date().toISOString();
 				await host.storage.set(storageKey, segments);
 				await syncApprovedMarkers(mediaFileId);
 
-				host.realtime.broadcast("segment:updated", segment);
+				// Realtime carries identifiers and status only; the full record stays in the admin response.
+				host.realtime.broadcast("segment:updated", {
+					id: segment.id,
+					mediaFileId,
+					score: segment.score,
+					status: segment.status,
+				});
 
 				return { body: segment };
 			},
@@ -489,7 +509,7 @@ export default definePlugin(config, {
 				const mediaFileId = query.mediaFileId;
 
 				if (!(segmentId && mediaFileId)) {
-					return { body: { error: "The id and mediaFileId parameters are required." } };
+					return { status: 400, body: { code: "segment.params_required" } };
 				}
 
 				const storageKey = `media_segments_${mediaFileId}`;
@@ -498,7 +518,7 @@ export default definePlugin(config, {
 				const index = segments.findIndex((s) => s.id === segmentId);
 
 				if (index === -1) {
-					return { body: { error: "Nie znaleziono segmentu." } };
+					return { status: 404, body: { code: "segment.not_found" } };
 				}
 
 				const segment = segments[index];

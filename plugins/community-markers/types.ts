@@ -1,4 +1,5 @@
 export type SegmentType = "intro" | "credits" | "recap" | "chapter" | "highlight";
+export type SegmentStatus = "pending" | "approved" | "rejected" | "hidden";
 
 export interface SegmentSubmission {
 	id: string;
@@ -14,7 +15,10 @@ export interface SegmentSubmission {
 	upvotes: string[];
 	downvotes: string[];
 	score: number;
-	status: "pending" | "approved" | "rejected";
+	/** `hidden` is set by negative votes; only an administrator moves a hidden segment on. */
+	status: SegmentStatus;
+	/** Set by any administrator edit; votes then no longer change the status. */
+	lockedByAdmin?: boolean;
 }
 
 export interface CreateSegmentRequest {
@@ -34,5 +38,5 @@ export interface UpdateSegmentRequest {
 	startSeconds?: number;
 	endSeconds?: number;
 	label?: string;
-	status?: "pending" | "approved" | "rejected";
+	status?: SegmentStatus;
 }
