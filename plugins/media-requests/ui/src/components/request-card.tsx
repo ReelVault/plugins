@@ -64,7 +64,7 @@ export function RequestCard({
 						) : null}
 						{canCancel ? (
 							<button type="button" className="rv-chipbtn rv-chipbtn--cancel" onClick={() => onCancel(request)}>
-								{messages.cancel}
+								{messages.remove}
 							</button>
 						) : null}
 					</div>

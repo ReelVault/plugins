@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import type { MediaRequest, MediaRequestStatus, RequestsSummary } from "../../types";
 import { createApi } from "./api";
+import { useConfirm } from "./components/confirm-sheet";
 import { EmptyState, ErrorState, Spinner } from "./components/feedback";
 import { RequestRow } from "./components/request-row";
 import { detach } from "./detach";
@@ -31,8 +32,9 @@ export function RequestsPage() {
 	const [filter, setFilter] = useState<StatusFilter>("all");
 	const [status, setStatus] = useState<"loading" | "idle" | "error">("loading");
 
+	// Only the first load shows the spinner. Refreshes (filter change, realtime
+	// events) swap the rows in place instead of blanking the list.
 	const load = useCallback(async (): Promise<void> => {
-		setStatus("loading");
 		try {
 			const [list, stats] = await Promise.all([
 				api.listRequests({ scope: "me", ...(filter !== "all" ? { status: filter } : {}) }),
@@ -42,7 +44,7 @@ export function RequestsPage() {
 			setSummary(stats);
 			setStatus("idle");
 		} catch {
-			setStatus("error");
+			setStatus((current) => (current === "loading" ? "error" : current));
 		}
 	}, [api, filter]);
 
@@ -56,8 +58,16 @@ export function RequestsPage() {
 		});
 	}, [host, load]);
 
+	const { ask, dialog: confirmDialog } = useConfirm();
+
 	const remove = async (request: MediaRequest): Promise<void> => {
-		if (!window.confirm(messages.confirmRemove)) return;
+		const accepted = await ask({
+			title: messages.confirmRemove,
+			confirmLabel: messages.remove,
+			cancelLabel: messages.cancel,
+			danger: true,
+		});
+		if (!accepted) return;
 		try {
 			await api.deleteRequest(request.id);
 			detach(load());
@@ -85,7 +95,16 @@ export function RequestsPage() {
 			);
 		}
 		if (status === "error") {
-			return <ErrorState text={messages.error} retryLabel={messages.retry} onRetry={() => detach(load())} />;
+			return (
+				<ErrorState
+					text={messages.error}
+					retryLabel={messages.retry}
+					onRetry={() => {
+						setStatus("loading");
+						detach(load());
+					}}
+				/>
+			);
 		}
 		if (requests.length === 0) {
 			return <EmptyState text={messages.noRequests} />;
@@ -143,7 +162,7 @@ export function RequestsPage() {
 					<button
 						key={value}
 						type="button"
-						className={`rv-chip${filter === value ? "rv-chip--active" : ""}`}
+						className={`rv-chip ${filter === value ? "rv-chip--active" : ""}`}
 						onClick={() => setFilter(value)}
 					>
 						{messages[STATUS_LABEL[value]]}
@@ -152,6 +171,7 @@ export function RequestsPage() {
 			</div>
 
 			{renderList()}
+			{confirmDialog}
 		</div>
 	);
 }

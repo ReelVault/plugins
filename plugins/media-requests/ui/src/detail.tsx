@@ -62,9 +62,14 @@ export function DetailView() {
 	const [seasonLoading, setSeasonLoading] = useState<number | null>(null);
 	const [seasonError, setSeasonError] = useState<number | null>(null);
 
+	// Runs for the first load and background refreshes alike. Only a failure
+	// before any data arrived replaces the page with the error state; a failed
+	// refresh keeps what is already on screen.
 	const load = useCallback(async (): Promise<void> => {
-		if (!(providerId && externalId)) return;
-		setStatus("loading");
+		if (!(providerId && externalId)) {
+			setStatus("error");
+			return;
+		}
 		try {
 			const result = await api.details({ providerId, externalId, mediaType });
 			setDetails(result);
@@ -77,13 +82,19 @@ export function DetailView() {
 			setRecommendations(recommendationPage.items.filter((item) => item.externalId !== externalId).slice(0, RECOMMENDATION_LIMIT));
 			setSimilar(similarPage.items.filter((item) => item.externalId !== externalId).slice(0, RECOMMENDATION_LIMIT));
 		} catch {
-			setStatus("error");
+			setStatus((current) => (current === "loading" ? "error" : current));
 		}
 	}, [api, providerId, externalId, mediaType]);
 
+	// A different title (or first mount) starts from a clean loading state; the
+	// spinner below is only shown here, never during a refresh.
 	useEffect(() => {
 		setExpandedSeason(null);
 		setSeasonCache({});
+		setDetails(null);
+		setRecommendations([]);
+		setSimilar([]);
+		setStatus("loading");
 		detach(load());
 		if (isPage) window.scrollTo({ top: 0 });
 	}, [load, isPage]);
@@ -118,7 +129,7 @@ export function DetailView() {
 		if (!details) return;
 		setSubmitting(true);
 		try {
-			await api.createRequest({
+			const result = await api.createRequest({
 				title: details.title,
 				mediaType,
 				year: details.year,
@@ -129,8 +140,8 @@ export function DetailView() {
 				requestedByName: host.context.user?.name,
 			});
 			host.toast("success", messages.requestSuccess);
-			setDetails({ ...details, state: "pending" });
-			detach(load());
+			// Update just the badge from the server's answer; no refetch, no page reload.
+			setDetails((current) => (current ? { ...current, state: result.request.status } : current));
 		} catch (error) {
 			host.toast("error", error instanceof Error ? error.message : messages.requestError);
 		} finally {
@@ -164,7 +175,16 @@ export function DetailView() {
 		);
 	}
 	if (status === "error" || !details) {
-		return <ErrorState text={messages.error} retryLabel={messages.retry} onRetry={() => detach(load())} />;
+		return (
+			<ErrorState
+				text={messages.error}
+				retryLabel={messages.retry}
+				onRetry={() => {
+					setStatus("loading");
+					detach(load());
+				}}
+			/>
+		);
 	}
 
 	const poster = widePosterUrl(details.posterPath);

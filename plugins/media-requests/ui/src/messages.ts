@@ -48,6 +48,7 @@ export interface Messages {
 	overview: string;
 	remove: string;
 	confirmRemove: string;
+	confirmRequestBody: string;
 	save: string;
 	cancel: string;
 	close: string;
@@ -133,6 +134,7 @@ const EN: Messages = {
 	overview: "Overview",
 	remove: "Remove",
 	confirmRemove: "Delete this request?",
+	confirmRequestBody: "Send a request for this title?",
 	save: "Save",
 	cancel: "Cancel",
 	close: "Close",
@@ -155,7 +157,7 @@ const EN: Messages = {
 	requestSuccess: "Request submitted",
 	requestError: "Could not submit the request",
 	actionError: "Action failed",
-	unsupported: "Discovery is unavailable — install a metadata provider (e.g. TMDB) that supports feeds.",
+	unsupported: "Discovery is unavailable — install a metadata provider (e.g. TMDB) that provides title lists.",
 	noProvider: "No metadata provider is installed.",
 	details: "Details",
 	approve: "Approve",
@@ -218,6 +220,7 @@ const PL: Messages = {
 	overview: "Przegląd",
 	remove: "Usuń",
 	confirmRemove: "Usunąć tę prośbę?",
+	confirmRequestBody: "Wysłać prośbę o ten tytuł?",
 	save: "Zapisz",
 	cancel: "Anuluj",
 	close: "Zamknij",
@@ -240,7 +243,7 @@ const PL: Messages = {
 	requestSuccess: "Prośba wysłana",
 	requestError: "Nie udało się wysłać prośby",
 	actionError: "Operacja nie powiodła się",
-	unsupported: "Odkrywanie niedostępne — zainstaluj dostawcę metadanych (np. TMDB) obsługującego kanały.",
+	unsupported: "Odkrywanie jest niedostępne — zainstaluj dostawcę metadanych (np. TMDB), który udostępnia listy tytułów.",
 	noProvider: "Nie zainstalowano żadnego dostawcy metadanych.",
 	details: "Szczegóły",
 	approve: "Zatwierdź",

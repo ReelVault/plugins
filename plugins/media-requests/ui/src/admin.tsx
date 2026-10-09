@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import type { MediaRequest, MediaRequestStatus, RequestsSummary } from "../../types";
 import { createApi } from "./api";
+import { useConfirm } from "./components/confirm-sheet";
 import { EmptyState, ErrorState, Spinner } from "./components/feedback";
 import { RequestRow } from "./components/request-row";
 import { detach } from "./detach";
@@ -34,14 +35,17 @@ export function AdminPage() {
 	const [status, setStatus] = useState<"loading" | "idle" | "error">("loading");
 	const [notesFor, setNotesFor] = useState<string | null>(null);
 
+	const { ask, dialog: confirmDialog } = useConfirm();
+
 	const typeLabels: Record<TypeFilter, string> = {
 		all: messages.type,
 		movie: messages.movie,
 		tv_show: messages.tvShow,
 	};
 
+	// Only the first load shows the spinner; filter changes and realtime refreshes
+	// update the rows in place.
 	const load = useCallback(async (): Promise<void> => {
-		setStatus("loading");
 		try {
 			const [list, stats] = await Promise.all([
 				api.listRequests({
@@ -55,7 +59,7 @@ export function AdminPage() {
 			setSummary(stats);
 			setStatus("idle");
 		} catch {
-			setStatus("error");
+			setStatus((current) => (current === "loading" ? "error" : current));
 		}
 	}, [api, statusFilter, typeFilter]);
 
@@ -90,7 +94,13 @@ export function AdminPage() {
 	};
 
 	const remove = async (request: MediaRequest): Promise<void> => {
-		if (!window.confirm(messages.confirmRemove)) return;
+		const accepted = await ask({
+			title: messages.confirmRemove,
+			confirmLabel: messages.remove,
+			cancelLabel: messages.cancel,
+			danger: true,
+		});
+		if (!accepted) return;
 		try {
 			await api.deleteRequest(request.id);
 			detach(load());
@@ -194,7 +204,7 @@ export function AdminPage() {
 			<button
 				key="notes"
 				type="button"
-				className={`rv-chipbtn rv-chipbtn--cancel${request.notes ? "rv-chipbtn--noted" : ""}`}
+				className={`rv-chipbtn rv-chipbtn--cancel ${request.notes ? "rv-chipbtn--noted" : ""}`}
 				onClick={() => setNotesFor(notesFor === request.id ? null : request.id)}
 			>
 				{messages.notes}
@@ -224,7 +234,16 @@ export function AdminPage() {
 			);
 		}
 		if (status === "error") {
-			return <ErrorState text={messages.error} retryLabel={messages.retry} onRetry={() => detach(load())} />;
+			return (
+				<ErrorState
+					text={messages.error}
+					retryLabel={messages.retry}
+					onRetry={() => {
+						setStatus("loading");
+						detach(load());
+					}}
+				/>
+			);
 		}
 		const visible = visibleRequests();
 		if (visible.length === 0) {
@@ -292,7 +311,7 @@ export function AdminPage() {
 					<button
 						key={`status-${value}`}
 						type="button"
-						className={`rv-chip${statusFilter === value ? "rv-chip--active" : ""}`}
+						className={`rv-chip ${statusFilter === value ? "rv-chip--active" : ""}`}
 						onClick={() => setStatusFilter(value)}
 					>
 						{messages[STATUS_LABEL[value]]}
@@ -303,7 +322,7 @@ export function AdminPage() {
 					<button
 						key={`type-${value}`}
 						type="button"
-						className={`rv-chip rv-chip--subtle${typeFilter === value ? "rv-chip--active" : ""}`}
+						className={`rv-chip rv-chip--subtle ${typeFilter === value ? "rv-chip--active" : ""}`}
 						onClick={() => setTypeFilter(value)}
 					>
 						{typeLabels[value]}
@@ -320,6 +339,7 @@ export function AdminPage() {
 			</div>
 
 			{renderList()}
+			{confirmDialog}
 		</div>
 	);
 }

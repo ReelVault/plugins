@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import type { GenreTile, MediaCard, MediaRequest, MediaRequestStatus } from "../../types";
+import type { GenreTile, MediaAvailabilityState, MediaCard, MediaRequest, MediaRequestStatus } from "../../types";
 import { createApi, type DiscoverQuery } from "./api";
+import { useConfirm } from "./components/confirm-sheet";
 import { EmptyState, ErrorState, SkeletonGrid, SkeletonRow } from "./components/feedback";
 import { GenreTileCard } from "./components/genre-tile";
 import { PosterCard } from "./components/poster-card";
@@ -96,8 +97,11 @@ export function DiscoverPage() {
 	const [searchResults, setSearchResults] = useState<MediaCard[] | null>(null);
 	const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
 
+	const { ask, dialog: confirmDialog } = useConfirm();
+
+	// Only the first load (status starts as "loading") shows skeletons. Background
+	// refreshes update the shelves in place, so the page never flashes.
 	const loadShelves = useCallback(async (): Promise<void> => {
-		setShelfStatus("loading");
 		try {
 			const pages = await Promise.all(BASE_SHELVES.map((shelf) => api.discover(shelf.query)));
 			const byKey: Record<string, MediaCard[]> = {};
@@ -109,7 +113,7 @@ export function DiscoverPage() {
 			setUnsupported(pages.every((page) => page.unsupported));
 			setShelfStatus("idle");
 		} catch {
-			setShelfStatus("error");
+			setShelfStatus((current) => (current === "loading" ? "error" : current));
 		}
 	}, [api]);
 
@@ -141,11 +145,12 @@ export function DiscoverPage() {
 	}, [loadShelves, loadRequests]);
 
 	// Genre tiles fire a burst of provider calls server-side; run them after the
-	// main shelves are in so the page paints first.
+	// main shelves are in so the page paints first. Background refreshes keep the
+	// status at "idle", so this runs once per successful load, not on every change.
 	useEffect(() => {
-		if (shelfStatus !== "idle" || searchTerm) return;
+		if (shelfStatus !== "idle") return;
 		detach(loadTiles());
-	}, [shelfStatus, searchTerm, loadTiles]);
+	}, [shelfStatus, loadTiles]);
 
 	useEffect(() => {
 		const unsubscribe = host.onEvent(REQUESTS_EVENT, () => {
@@ -190,9 +195,18 @@ export function DiscoverPage() {
 		host.navigate(detailPageUrl(card.providerId, card.externalId, card.mediaType));
 	};
 
+	/** Writes the new availability state into every list that shows this title, so the card updates in place. */
+	const patchCardState = (card: MediaCard, state: MediaAvailabilityState): void => {
+		const patch = (list: MediaCard[]): MediaCard[] =>
+			list.map((item) => (item.providerId === card.providerId && item.externalId === card.externalId ? { ...item, state } : item));
+		setShelves((current) => Object.fromEntries(Object.entries(current).map(([key, list]) => [key, patch(list)])));
+		setSearchResults((current) => (current ? patch(current) : current));
+		setGenreView((current) => (current ? { ...current, items: patch(current.items) } : current));
+	};
+
 	const requestCard = async (card: MediaCard): Promise<void> => {
 		try {
-			await api.createRequest({
+			const result = await api.createRequest({
 				title: card.title,
 				mediaType: card.mediaType,
 				year: card.year,
@@ -202,16 +216,37 @@ export function DiscoverPage() {
 				overview: card.overview,
 				requestedByName: host.context.user?.name,
 			});
+			// The server answers with the real status (auto-approval may skip "pending"),
+			// so the card reflects it immediately and no shelf has to reload.
+			patchCardState(card, result.request.status);
 			host.toast("success", messages.requestSuccess);
-			detach(loadShelves());
 			detach(loadRequests());
 		} catch (error) {
 			host.toast("error", error instanceof Error ? error.message : messages.requestError);
 		}
 	};
 
+	/** Poster "+" button: a stray tap must not file a request, so confirm first. */
+	const askRequest = async (card: MediaCard): Promise<void> => {
+		const accepted = await ask({
+			title: card.year ? `${card.title} (${card.year})` : card.title,
+			body: messages.confirmRequestBody,
+			confirmLabel: messages.request,
+			cancelLabel: messages.cancel,
+		});
+		if (accepted) await requestCard(card);
+	};
+
+	const requestFromCard = (card: MediaCard): void => detach(askRequest(card));
+
 	const cancelRequest = async (request: MediaRequest): Promise<void> => {
-		if (!window.confirm(messages.confirmRemove)) return;
+		const accepted = await ask({
+			title: messages.confirmRemove,
+			confirmLabel: messages.remove,
+			cancelLabel: messages.cancel,
+			danger: true,
+		});
+		if (!accepted) return;
 		try {
 			await api.deleteRequest(request.id);
 			detach(loadRequests());
@@ -339,7 +374,7 @@ export function DiscoverPage() {
 					cards={shelves[shelf.key] ?? []}
 					messages={messages}
 					onOpen={openCard}
-					onRequest={(card) => detach(requestCard(card))}
+					onRequest={requestFromCard}
 					loading={shelfStatus === "loading"}
 				/>,
 			);
@@ -364,13 +399,7 @@ export function DiscoverPage() {
 				))}
 				{searchResults ? <span className="rv-filterrow__count">{filteredSearch.length}</span> : null}
 			</div>
-			<CardGrid
-				cards={filteredSearch}
-				messages={messages}
-				onOpen={openCard}
-				onRequest={(card) => detach(requestCard(card))}
-				loading={searchResults === null}
-			/>
+			<CardGrid cards={filteredSearch} messages={messages} onOpen={openCard} onRequest={requestFromCard} loading={searchResults === null} />
 		</section>
 	);
 
@@ -383,7 +412,7 @@ export function DiscoverPage() {
 					cards={genreView.items}
 					messages={messages}
 					onOpen={openCard}
-					onRequest={(card) => detach(requestCard(card))}
+					onRequest={requestFromCard}
 					loading={genreView.loading && genreView.items.length === 0}
 				/>
 				{genreView.page < genreView.totalPages ? (
@@ -404,7 +433,16 @@ export function DiscoverPage() {
 
 	const renderContent = (): ReactNode => {
 		if (shelfStatus === "error") {
-			return <ErrorState text={messages.error} retryLabel={messages.retry} onRetry={() => detach(loadShelves())} />;
+			return (
+				<ErrorState
+					text={messages.error}
+					retryLabel={messages.retry}
+					onRetry={() => {
+						setShelfStatus("loading");
+						detach(loadShelves());
+					}}
+				/>
+			);
 		}
 		if (unsupported && !searchTerm && !genreView) {
 			return <EmptyState text={messages.unsupported} />;
@@ -451,22 +489,26 @@ export function DiscoverPage() {
 							placeholder={messages.searchPlaceholder}
 							onChange={(event) => setSearchInput(event.target.value)}
 						/>
-						<button type="submit" className="rv-button rv-button--compact">
-							{messages.search}
-						</button>
 						{searchTerm || genreView ? (
 							<button
 								type="button"
-								className="rv-button rv-button--ghost rv-button--compact"
+								className="rv-search__clear"
+								title={messages.clear}
+								aria-label={messages.clear}
 								onClick={() => {
 									setSearchInput("");
 									setSearchTerm(null);
 									setGenreView(null);
 								}}
 							>
-								{messages.clear}
+								<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+									<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+								</svg>
 							</button>
 						) : null}
+						<button type="submit" className="rv-button rv-button--primary rv-button--compact">
+							{messages.search}
+						</button>
 					</form>
 					<button
 						type="button"
@@ -479,6 +521,7 @@ export function DiscoverPage() {
 			</header>
 
 			{renderContent()}
+			{confirmDialog}
 		</div>
 	);
 }
