@@ -38,6 +38,14 @@
 				"priority": 100,
 				"action": { "type": "dialog", "dialog": "report" }
 			}
+		],
+		"player-footer": [
+			{
+				"label": { "en": "Report a bug", "pl": "Zgłoś błąd" },
+				"icon": "Bug",
+				"priority": 50,
+				"action": { "type": "dialog", "dialog": "report" }
+			}
 		]
 	}
 }

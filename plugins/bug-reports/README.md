@@ -29,7 +29,7 @@ Textarea, Table…), so it matches the app and the host contains no plugin-speci
 code. Schemas are data — they cannot run code; data and mutations go through the
 plugin's backend routes.
 
-- `ui/schema-report.ts` → the "Report a bug" dialog (submission form).
+- `ui/schema-report.ts` → the "Report a bug" dialog (submission form). It is reachable from the floating button and from the player's footer; a report sent from the player records the media file being played (`mediaId`).
 - `ui/schema-detail.ts` → the manage dialog: the reporter, page URL and device details, plus status, severity and notes (save via PATCH) and delete (DELETE, after a confirmation). The captured logs are stored with the report and returned by `GET /reports/item/:id`; the dialog does not display them yet.
 - `ui/schema-admin.ts` → the admin panel (stats, filters, report table, row actions).
 - `ui.json` declares the surfaces with `schemaRef` (`./dist/ui/schema-*.json`) and the `root-floating-overlay` and `details-action-bar` slots that open the dialog.

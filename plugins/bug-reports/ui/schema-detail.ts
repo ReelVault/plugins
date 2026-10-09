@@ -1,4 +1,4 @@
-import { button, defineSchema, grid, heading, row, selectField, text, textareaField } from "@reelvault/sdk/ui/schema";
+import { button, defineSchema, grid, heading, row, selectField, text, textareaField, when } from "@reelvault/sdk/ui/schema";
 
 /**
  * "Manage" dialog opened from the admin reports table: shows the report and
@@ -20,6 +20,15 @@ export default defineSchema({
 			"muted",
 		),
 		text({ en: "Page: {{data.report.report.pageUrl}}", pl: "Strona: {{data.report.report.pageUrl}}" }, "muted"),
+		when({ left: "data.report.report.mediaId", op: "truthy" }, [
+			text(
+				{
+					en: "Media file: {{data.report.report.mediaId}}",
+					pl: "Plik: {{data.report.report.mediaId}}",
+				},
+				"muted",
+			),
+		]),
 		text(
 			{
 				en: "Device: {{data.report.report.deviceInfo.browser}} · {{data.report.report.deviceInfo.os}}",

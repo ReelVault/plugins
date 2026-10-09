@@ -83,6 +83,8 @@ export default defineSchema({
 								description: "{{form.description}}",
 								logs: "{{form.logs}}",
 								pageUrl: "{{context.pageUrl}}",
+								// Set when the dialog opens from the player; absent elsewhere, so the field is left out.
+								mediaId: "{{context.player.mediaFileId}}",
 								deviceInfo: {
 									userAgent: "{{context.device.userAgent}}",
 									language: "{{context.device.language}}",
