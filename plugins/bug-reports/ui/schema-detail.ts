@@ -12,6 +12,21 @@ export default defineSchema({
 	body: [
 		heading("{{data.report.report.title}}"),
 		text("{{data.report.report.description}}", "muted"),
+		text(
+			{
+				en: "Reported by: {{data.report.report.reportedBy.userId}}",
+				pl: "Zgłosił: {{data.report.report.reportedBy.userId}}",
+			},
+			"muted",
+		),
+		text({ en: "Page: {{data.report.report.pageUrl}}", pl: "Strona: {{data.report.report.pageUrl}}" }, "muted"),
+		text(
+			{
+				en: "Device: {{data.report.report.deviceInfo.browser}} · {{data.report.report.deviceInfo.os}}",
+				pl: "Urządzenie: {{data.report.report.deviceInfo.browser}} · {{data.report.report.deviceInfo.os}}",
+			},
+			"muted",
+		),
 		grid(
 			[
 				selectField({
@@ -47,6 +62,18 @@ export default defineSchema({
 		}),
 		row(
 			[
+				button(
+					{ en: "Delete", pl: "Usuń" },
+					{
+						type: "call",
+						method: "DELETE",
+						path: "/reports/{{context.params.id}}",
+						confirm: { en: "Delete this report permanently?", pl: "Usunąć to zgłoszenie na stałe?" },
+						successToast: { en: "Report deleted", pl: "Zgłoszenie usunięte" },
+						close: true,
+						refresh: ["reports", "summary"],
+					},
+				),
 				button(
 					{ en: "Save", pl: "Zapisz" },
 					{

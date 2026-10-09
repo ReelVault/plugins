@@ -30,7 +30,7 @@ code. Schemas are data — they cannot run code; data and mutations go through t
 plugin's backend routes.
 
 - `ui/schema-report.ts` → the "Report a bug" dialog (submission form).
-- `ui/schema-detail.ts` → the edit dialog (status, severity, notes; save via PATCH, delete via DELETE).
+- `ui/schema-detail.ts` → the manage dialog: the reporter, page URL and device details, plus status, severity and notes (save via PATCH) and delete (DELETE, after a confirmation). The captured logs are stored with the report and returned by `GET /reports/item/:id`; the dialog does not display them yet.
 - `ui/schema-admin.ts` → the admin panel (stats, filters, report table, row actions).
 - `ui.json` declares the surfaces with `schemaRef` (`./dist/ui/schema-*.json`) and the `root-floating-overlay` and `details-action-bar` slots that open the dialog.
 
