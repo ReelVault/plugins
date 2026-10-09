@@ -1,6 +1,6 @@
-import { definePlugin } from "@reelvault/sdk/plugin";
+import { definePlugin, fail } from "@reelvault/sdk/plugin";
 import { config } from "./config";
-import { ReportsManager } from "./src/reports-manager";
+import { ReportNotFoundError, ReportPermissionError, ReportsManager } from "./src/reports-manager";
 import type {
 	BugReportCategory,
 	BugReportDeviceInfo,
@@ -165,6 +165,7 @@ export default definePlugin(config, {
 		await host.routes.register({
 			method: "GET",
 			path: "/reports/summary",
+			access: "admin",
 			handler: async () => {
 				const summary = await manager.getSummary();
 				return {
@@ -180,17 +181,17 @@ export default definePlugin(config, {
 			handler: async ({ params, user }) => {
 				const id = params.id;
 				if (!id) {
-					return { body: { error: "Missing report ID." } };
+					return fail(400, "bug_reports.id_required");
 				}
 
 				const report = await manager.getReportById(id);
 				if (!report) {
-					return { body: { error: "Report does not exist." } };
+					return fail(404, "bug_reports.not_found");
 				}
 
 				const isAdmin = user.role === "admin";
 				if (!isAdmin && report.reportedBy.userId !== user.id) {
-					return { body: { error: "You do not have access to this report." } };
+					return fail(403, "bug_reports.forbidden");
 				}
 
 				return {
@@ -265,11 +266,11 @@ export default definePlugin(config, {
 				const payload = parseUpdateBugReportInput(body);
 
 				if (!id) {
-					return { body: { error: "Missing report ID." } };
+					return fail(400, "bug_reports.id_required");
 				}
 
 				if (!payload) {
-					return { body: { error: "Invalid report update data." } };
+					return fail(400, "bug_reports.invalid_update");
 				}
 
 				try {
@@ -281,9 +282,9 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to update the report." },
-					};
+					if (err instanceof ReportNotFoundError) return fail(404, "bug_reports.not_found");
+
+					throw err;
 				}
 			},
 		});
@@ -295,7 +296,7 @@ export default definePlugin(config, {
 			handler: async ({ params, user }) => {
 				const id = params.id;
 				if (!id) {
-					return { body: { error: "Missing report ID." } };
+					return fail(400, "bug_reports.id_required");
 				}
 
 				const isAdmin = user.role === "admin";
@@ -310,9 +311,10 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to delete the report." },
-					};
+					if (err instanceof ReportNotFoundError) return fail(404, "bug_reports.not_found");
+					if (err instanceof ReportPermissionError) return fail(403, "bug_reports.forbidden");
+
+					throw err;
 				}
 			},
 		});

@@ -7,7 +7,7 @@ Lets users report bugs, playback problems, bad metadata and UI glitches straight
 - **Report form** — users submit a category, priority, description, page URL, and browser/OS details.
 - **HTTP routes**:
   - `GET /reports` — list reports (users see their own; admins see all, with filters for status, category, severity and text).
-  - `GET /reports/summary` — counts by status (open, in progress, resolved, …).
+  - `GET /reports/summary` — counts by status (open, in progress, resolved, …). Administrators only.
   - `GET /reports/item/:id` — one report.
   - `POST /reports` — create a report.
   - `PATCH /reports/:id` — update status, priority and admin notes (admin only).

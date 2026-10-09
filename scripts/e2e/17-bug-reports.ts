@@ -2,6 +2,11 @@ import { Api } from "./lib/client";
 import { ensure, Suite } from "./lib/report";
 import { readState } from "./lib/state";
 
+/** Errors carry a stable `code` (fail helper) or, for older routes, a `error` message. */
+function hasErrorBody(body: unknown): boolean {
+	return typeof body === "object" && body !== null && ("error" in body || "code" in body);
+}
+
 const suite = new Suite("17-bug-reports");
 
 interface Report {
@@ -55,7 +60,7 @@ async function main(): Promise<void> {
 	await suite.case("report without title is rejected", async (s) => {
 		const response = await userA.post<object>(`${base}/reports`, { title: "", category: "ui" });
 		s.expect(response.status === 200 || response.status === 400, `no title -> ${response.status}`);
-		s.expect(Boolean((response.body as { error?: string }).error), "missing title produced no error message");
+		s.expect(hasErrorBody(response.body), "missing title produced no error message");
 	});
 
 	await suite.case("user A sees own report only", async (s) => {
@@ -107,10 +112,7 @@ async function main(): Promise<void> {
 
 	await suite.case("user cannot change report status", async (s) => {
 		const response = await userA.patch<object>(`${base}/reports/${createdId}`, { status: "resolved" });
-		s.expect(
-			response.status === 403 || Boolean((response.body as { error?: string }).error),
-			`user PATCH -> ${response.status} ${JSON.stringify(response.body)}`,
-		);
+		s.expect(response.status === 403 || hasErrorBody(response.body), `user PATCH -> ${response.status} ${JSON.stringify(response.body)}`);
 	});
 
 	await suite.case("admin sets status and admin notes", async (s) => {
@@ -129,10 +131,7 @@ async function main(): Promise<void> {
 
 	await suite.case("unknown report id handled", async (s) => {
 		const response = await admin.get<object>(`${base}/reports/item/01ffffffffffffffffffffffffffff`);
-		s.expect(
-			response.status === 404 || Boolean((response.body as { error?: string }).error),
-			`unknown id -> ${response.status} ${JSON.stringify(response.body)}`,
-		);
+		s.expect(response.status === 404 || hasErrorBody(response.body), `unknown id -> ${response.status} ${JSON.stringify(response.body)}`);
 	});
 
 	await suite.case("active report limit enforced per user", async (s) => {
@@ -146,10 +145,7 @@ async function main(): Promise<void> {
 		const second = await userB.post<ReportResponse>(`${base}/reports`, { title: "Limit probe 2", category: "general" });
 		const third = await userB.post<object>(`${base}/reports`, { title: "Limit probe 3", category: "general" });
 		s.expect(first.status === 201 && second.status === 201, `first two reports failed: ${first.status}/${second.status}`);
-		s.expect(
-			Boolean((third.body as { error?: string }).error),
-			`third report should hit the limit: ${third.status} ${JSON.stringify(third.body)}`,
-		);
+		s.expect(hasErrorBody(third.body), `third report should hit the limit: ${third.status} ${JSON.stringify(third.body)}`);
 		const restore = await admin.put("/v1/admin/plugins/org.reelvault.bug-reports/config", {
 			cookie: state.adminCookie,
 			body: { maxActiveReportsPerUser: 20 },
@@ -159,10 +155,7 @@ async function main(): Promise<void> {
 
 	await suite.case("foreign delete denied, author delete allowed", async (s) => {
 		const denied = await userB.delete<object>(`${base}/reports/${createdId}`);
-		s.expect(
-			denied.status === 403 || Boolean((denied.body as { error?: string }).error),
-			`foreign delete -> ${denied.status} ${JSON.stringify(denied.body)}`,
-		);
+		s.expect(denied.status === 403 || hasErrorBody(denied.body), `foreign delete -> ${denied.status} ${JSON.stringify(denied.body)}`);
 		const allowed = await userA.delete<object>(`${base}/reports/${createdId}`);
 		s.expect(
 			allowed.status === 200 || Boolean((allowed.body as { success?: boolean }).success),
