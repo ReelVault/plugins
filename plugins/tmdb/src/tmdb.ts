@@ -27,7 +27,10 @@ export class TMDBApi {
 		this.fallbackLanguage = fallbackLanguage;
 		this.searchLanguage = searchLanguage;
 		this.client = new TMDB(apiKey, { language: toLanguage(language) });
-		if (fallbackLanguage && fallbackLanguage !== language) {
+		// Always build the fallback client: the fallback is relative to the language a
+		// REQUEST asks for (a library can ask for `pl` while the config says `en-US`),
+		// so comparing with the configured language would silently disable it.
+		if (fallbackLanguage) {
 			this.fallbackClient = new TMDB(apiKey, { language: toLanguage(fallbackLanguage) });
 		}
 	}

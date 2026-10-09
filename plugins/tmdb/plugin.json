@@ -1,9 +1,11 @@
 {
 	"id": "org.reelvault.tmdb",
 	"name": "TMDB Metadata Provider",
-	"version": "1.0.2",
+	"version": "1.0.4",
 	"description": "Metadata provider backed by The Movie Database API.",
 	"entry": "./index.ts",
 	"capabilities": ["metadataProvider"],
-	"csp": { "img-src": ["https://image.tmdb.org"] }
+	"csp": {
+		"img-src": ["https://image.tmdb.org"]
+	}
 }

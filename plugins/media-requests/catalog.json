@@ -1,4 +1,4 @@
 {
 	"category": "automation",
-	"changelog": "1.0.2: request storage writes are now atomic (host-locked update) \u2014 concurrent submits and background availability checks no longer lose requests."
+	"changelog": "1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update)."
 }

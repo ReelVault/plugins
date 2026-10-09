@@ -1,3 +1,4 @@
 {
-	"category": "metadata"
+	"category": "metadata",
+	"changelog": "1.0.4: the fallback language is now always fetched — a library asking for another language (e.g. Polish) no longer silently disables the English fallback for titles, seasons and episodes. 1.0.3: request storage writes are now atomic."
 }
