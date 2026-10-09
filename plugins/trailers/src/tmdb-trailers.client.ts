@@ -1,3 +1,5 @@
+import type { PluginFetch } from "@reelvault/sdk/plugin";
+
 interface TmdbVideoResult {
 	id: string;
 	iso_639_1: string;
@@ -46,10 +48,12 @@ function parseVideoResults(payload: unknown): TmdbVideoResult[] {
 export class TmdbTrailersClient {
 	private readonly apiKey: string;
 	private readonly preferredLang: string;
+	private readonly fetcher: PluginFetch;
 
-	constructor(apiKey?: string, preferredLang = "pl-PL") {
+	constructor(apiKey: string | undefined, preferredLang: string, fetcher: PluginFetch) {
 		this.apiKey = (apiKey ?? "").trim();
 		this.preferredLang = preferredLang;
+		this.fetcher = fetcher;
 	}
 
 	private getHeaders(): Record<string, string> {
@@ -100,7 +104,7 @@ export class TmdbTrailersClient {
 
 		try {
 			// 1. Primary search
-			const res = await fetch(this.getUrl(primaryEndpoint, primaryParams), {
+			const res = await this.fetcher(this.getUrl(primaryEndpoint, primaryParams), {
 				headers: this.getHeaders(),
 				signal: AbortSignal.timeout(6000),
 			});
@@ -119,7 +123,7 @@ export class TmdbTrailersClient {
 				language: this.preferredLang,
 			};
 			const fallbackType = mediaType === "movie" ? "tv_show" : "movie";
-			const secRes = await fetch(this.getUrl(secondaryEndpoint, secParams), {
+			const secRes = await this.fetcher(this.getUrl(secondaryEndpoint, secParams), {
 				headers: this.getHeaders(),
 				signal: AbortSignal.timeout(6000),
 			});
@@ -205,7 +209,7 @@ export class TmdbTrailersClient {
 		if (!this.apiKey) return [];
 
 		try {
-			const res = await fetch(
+			const res = await this.fetcher(
 				this.getUrl(endpoint, {
 					include_video_language: `${langCode},en,null`,
 				}),
