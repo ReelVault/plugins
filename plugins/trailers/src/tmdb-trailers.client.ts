@@ -52,7 +52,7 @@ export class TmdbTrailersClient {
 		this.preferredLang = preferredLang;
 	}
 
-	private getHeaders(): HeadersInit {
+	private getHeaders(): Record<string, string> {
 		if (this.apiKey.startsWith("ey")) {
 			return {
 				Authorization: `Bearer ${this.apiKey}`,
