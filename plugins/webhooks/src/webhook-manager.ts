@@ -19,6 +19,14 @@ interface WebhookPayload {
 }
 
 /** Sends event notifications to Discord / Telegram / a generic JSON endpoint. */
+/** Waits between delivery attempts: one initial try, then retries after these delays. */
+const RETRY_DELAYS_MS = [1_000, 4_000];
+
+/** Network errors, rate limiting and server errors may clear up; any other HTTP status will not. */
+function isRetryable(result: DeliveryResult): boolean {
+	return result.statusCode === undefined || result.statusCode === 429 || result.statusCode >= 500;
+}
+
 export class WebhookManager {
 	private readonly host: PluginHost;
 	private readonly config: WebhooksConfig;
@@ -104,7 +112,8 @@ export class WebhookManager {
 	}
 
 	private async broadcast(event: WebhookEventName, title: string, details: string): Promise<void> {
-		for (const target of this.activeTargets()) await this.deliver(target, event, title, details);
+		// Targets deliver in parallel: a slow endpoint must not hold up the others.
+		await Promise.all(this.activeTargets().map((target) => this.deliver(target, event, title, details)));
 	}
 
 	private activeTargets(): WebhookTarget[] {
@@ -117,7 +126,7 @@ export class WebhookManager {
 
 	private async deliver(target: WebhookTarget, event: WebhookEventName, title: string, details: string): Promise<DeliveryResult> {
 		const timestamp = new Date().toISOString();
-		const result = await this.send(target, { event, title, details, timestamp });
+		const result = await this.sendWithRetry(target, { event, title, details, timestamp });
 		await this.appendLog({
 			id: crypto.randomUUID(),
 			timestamp,
@@ -173,6 +182,21 @@ export class WebhookManager {
 		} catch (error) {
 			return { success: false, error: error instanceof Error ? error.message : String(error) };
 		}
+	}
+
+	/** One delivery plus retries for failures that can succeed later; a rejected request is final. */
+	private async sendWithRetry(target: WebhookTarget, payload: WebhookPayload): Promise<DeliveryResult> {
+		let result = await this.send(target, payload);
+		for (const delayMs of RETRY_DELAYS_MS) {
+			if (result.success || !isRetryable(result)) break;
+
+			await new Promise((resolve) => {
+				setTimeout(resolve, delayMs);
+			});
+			result = await this.send(target, payload);
+		}
+
+		return result;
 	}
 
 	private toResult(status: number, body: string): DeliveryResult {
