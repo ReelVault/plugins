@@ -4,7 +4,14 @@ import type { TrailerInfo, TrailersStats } from "../types";
 import { TmdbTrailersClient } from "./tmdb-trailers.client";
 
 const INDEX_KEY = "trailers_index";
-const STATS_KEY = "trailers_stats";
+
+/** How long a title without a trailer is remembered before TMDB is asked again. */
+export const NO_TRAILER_TTL_MS = 24 * 60 * 60_000;
+
+interface NoTrailerEntry {
+	noTrailer: true;
+	checkedAt: string;
+}
 
 function toStorageKey(prefix: string, rawKey: string): string {
 	const sanitized = rawKey
@@ -26,8 +33,16 @@ function isTrailerInfo(value: unknown): value is TrailerInfo {
 	return isRecord(value) && typeof value.trailerKey === "string" && (value.mediaType === "movie" || value.mediaType === "tv_show");
 }
 
-function isStatsMeta(value: unknown): value is { lastSyncAt?: string } {
-	return isRecord(value) && (value.lastSyncAt === undefined || typeof value.lastSyncAt === "string");
+function isNoTrailerEntry(value: unknown): value is NoTrailerEntry {
+	return isRecord(value) && value.noTrailer === true && typeof value.checkedAt === "string";
+}
+
+/** True while a remembered "no trailer" answer is younger than NO_TRAILER_TTL_MS. */
+export function isFreshNoTrailerEntry(value: unknown, now = Date.now()): boolean {
+	if (!isNoTrailerEntry(value)) return false;
+
+	const checkedAt = Date.parse(value.checkedAt);
+	return Number.isFinite(checkedAt) && now - checkedAt < NO_TRAILER_TTL_MS;
 }
 
 function firstNonEmpty(...values: Array<string | undefined>): string {
@@ -75,6 +90,11 @@ export class TrailersManager {
 			return cached;
 		}
 
+		// A recent "no trailer" answer stands until it expires, so TMDB is not searched again for it.
+		if (isFreshNoTrailerEntry(storedCache)) {
+			return null;
+		}
+
 		// 3. Search TMDB if ID is missing
 		const trailer = await this.discoverTrailer(context, metadataId, cacheKey);
 		return trailer;
@@ -97,13 +117,13 @@ export class TrailersManager {
 		}
 
 		if (!tmdbId) {
-			return null;
+			return await this.rememberNoTrailer(cacheKey);
 		}
 
 		// 4. Fetch trailer video from TMDB
 		const trailerResult = await this.tmdbClient.fetchTrailer(tmdbId, mediaType);
 		if (!trailerResult) {
-			return null;
+			return await this.rememberNoTrailer(cacheKey);
 		}
 
 		const trailerInfo: TrailerInfo = {
@@ -126,6 +146,14 @@ export class TrailersManager {
 		}
 
 		return trailerInfo;
+	}
+
+	/** Stores the "no trailer" answer with its time, so the lookup is skipped until the entry expires. */
+	private async rememberNoTrailer(cacheKey: string): Promise<null> {
+		const entry: NoTrailerEntry = { noTrailer: true, checkedAt: new Date().toISOString() };
+		await this.host.storage.set(cacheKey, entry);
+
+		return null;
 	}
 
 	private async resolveContext(metadataId: string | undefined, options?: TrailerQueryOptions): Promise<ResolvedTrailerContext> {
@@ -187,56 +215,11 @@ export class TrailersManager {
 			}
 		}
 
-		const storedStats = await this.host.storage.get(STATS_KEY);
-		const statsMeta = isStatsMeta(storedStats) ? storedStats : undefined;
-
 		return {
 			cachedCount: index.length,
 			moviesCount,
 			showsCount,
-			lastSyncAt: statsMeta?.lastSyncAt,
 		};
-	}
-
-	/**
-	 * Pre-fetches and caches trailers for given metadata items or known IDs.
-	 */
-	async bulkCache(
-		items?: Array<{ id: string; title?: string; type?: "movie" | "tv_show"; tmdbId?: number }>,
-	): Promise<{ processed: number; discovered: number }> {
-		let processed = 0;
-		let discovered = 0;
-
-		const targetItems = items ?? [];
-		for (const item of targetItems) {
-			if (!item.id) continue;
-			processed++;
-
-			const storedExisting = await this.host.storage.get(toStorageKey("trailer_meta", item.id));
-			const existing = isTrailerInfo(storedExisting) ? storedExisting : null;
-			if (existing) {
-				continue;
-			}
-
-			const trailer = await this.getTrailer(item.id, {
-				title: item.title,
-				mediaType: item.type === "tv_show" ? "tv_show" : "movie",
-				tmdbId: item.tmdbId,
-			});
-
-			if (trailer) {
-				discovered++;
-			}
-
-			// Small delay to respect rate limits
-			await new Promise((resolve) => {
-				setTimeout(resolve, 100);
-			});
-		}
-
-		await this.host.storage.set(STATS_KEY, { lastSyncAt: new Date().toISOString() });
-
-		return { processed, discovered };
 	}
 
 	private async addToIndex(metadataId: string): Promise<void> {

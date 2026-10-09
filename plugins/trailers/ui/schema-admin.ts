@@ -1,6 +1,6 @@
 import { button, defineSchema, row, stack, stats, text, textField } from "@reelvault/sdk/ui/schema";
 
-/** Admin panel: trailer cache stats, bulk cache and a tester. */
+/** Admin panel: trailer cache stats and a tester. */
 export default defineSchema({
 	data: { stats: { path: "/stats" } },
 	body: [
@@ -9,22 +9,6 @@ export default defineSchema({
 			{ label: { en: "Movies", pl: "Filmy" }, value: "{{data.stats.moviesCount}}", icon: "Film" },
 			{ label: { en: "Series", pl: "Seriale" }, value: "{{data.stats.showsCount}}", icon: "Tv" },
 		]),
-		row(
-			[
-				button(
-					{ en: "Cache all trailers", pl: "Zbuforuj wszystkie zwiastuny" },
-					{
-						type: "call",
-						path: "/cache-all",
-						method: "POST",
-						successToast: { en: "Trailer sync finished", pl: "Synchronizacja zwiastunów zakończona" },
-						refresh: ["stats"],
-					},
-					{ icon: "Zap" },
-				),
-			],
-			{ align: "end" },
-		),
 		stack([
 			text({ en: "Trailer tester", pl: "Tester zwiastunów" }, "muted"),
 			textField({

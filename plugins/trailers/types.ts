@@ -15,5 +15,4 @@ export interface TrailersStats {
 	cachedCount: number;
 	moviesCount: number;
 	showsCount: number;
-	lastSyncAt?: string;
 }

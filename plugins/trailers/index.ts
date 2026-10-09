@@ -2,33 +2,6 @@ import { definePlugin, ok, route, t } from "@reelvault/sdk/plugin";
 import { config } from "./config";
 import { TrailersManager } from "./src/trailers-manager";
 
-interface BulkCacheItem {
-	id: string;
-	title?: string;
-	type?: "movie" | "tv_show";
-	tmdbId?: number;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function parseBulkCacheItems(body: unknown): BulkCacheItem[] | undefined {
-	if (!Array.isArray(body)) return undefined;
-
-	const items: BulkCacheItem[] = [];
-	for (const entry of body) {
-		if (!isRecord(entry) || typeof entry.id !== "string") continue;
-		items.push({
-			id: entry.id,
-			...(typeof entry.title === "string" ? { title: entry.title } : {}),
-			...(entry.type === "movie" || entry.type === "tv_show" ? { type: entry.type } : {}),
-			...(typeof entry.tmdbId === "number" ? { tmdbId: entry.tmdbId } : {}),
-		});
-	}
-	return items;
-}
-
 const TrailerQuery = t.Object({
 	metadataId: t.Optional(t.String()),
 	title: t.Optional(t.String()),
@@ -89,18 +62,6 @@ export default definePlugin(config, {
 					...stats,
 					config: { preferredLanguage: host.config.preferredLanguage },
 				});
-			},
-		});
-
-		// 3. HTTP route: POST /cache-all - bulk trailer fetch
-		await host.routes.register({
-			method: "POST",
-			path: "/cache-all",
-			access: "admin",
-			handler: async ({ body }) => {
-				const items = parseBulkCacheItems(body);
-				const result = await manager.bulkCache(items);
-				return ok({ success: true, ...result });
 			},
 		});
 	},
