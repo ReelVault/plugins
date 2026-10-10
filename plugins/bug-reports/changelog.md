@@ -8,6 +8,7 @@
 
 ### Fixes
 
+- **Notify admins** — a new bug report's notification went to the person who reported it. It now goes to every administrator, as the setting says.
 - **Storage limit** — each report is stored under its own key with an index of ids, so the 64 KiB value limit of plugin storage no longer stops new reports once enough have been filed. A report stored by an earlier version moves over on first use.
 - **Log size and report count** — captured logs keep their newest 16,000 characters, and at most 1,500 reports are stored. A full store refuses new reports until closed ones are deleted.
 - **Concurrent writes** — creating, updating, deleting and cleaning up reports run one at a time. Two writes at once cannot drop one, and two submissions at once cannot both pass the active-report limit.

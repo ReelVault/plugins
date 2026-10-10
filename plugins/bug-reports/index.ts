@@ -228,9 +228,7 @@ export default definePlugin(config, {
 					// In-app notification when enabled
 					if (host.config.notifyAdminsOnReport) {
 						try {
-							await host.notifications.create({
-								userId,
-								profileId,
+							await host.notifications.createForAdmins({
 								type: "bug-report",
 								title: `New bug report: ${report.title}`,
 								message: `Kategoria: ${report.category}, Priorytet: ${report.severity}`,
