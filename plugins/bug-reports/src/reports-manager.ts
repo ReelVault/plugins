@@ -1,4 +1,4 @@
-import type { PluginHost } from "@reelvault/sdk/plugin";
+import type { PluginHost, PluginStorage } from "@reelvault/sdk/plugin";
 import type { BugReportsConfig } from "../config";
 import type {
 	BugReport,
@@ -11,7 +11,18 @@ import type {
 	UpdateBugReportInput,
 } from "../types";
 
-const STORAGE_KEY_REPORTS = "bug_reports_list";
+/** One key per report, so no single stored value grows with the number of reports. */
+const REPORT_KEY_PREFIX = "bug_report:";
+/** The ids of every stored report. It is one value, so it is capped at MAX_STORED_REPORTS. */
+const INDEX_KEY = "bug_reports_index";
+/** Where earlier versions kept every report in one value; moved to per-report keys on first use. */
+const LEGACY_LIST_KEY = "bug_reports_list";
+/** ~1500 report ids stay under the 64 KiB value limit of the index. */
+const MAX_STORED_REPORTS = 1_500;
+/** Newest log characters kept per report. At 3 bytes each in UTF-8 they stay under the 64 KiB value limit with the other fields. */
+const MAX_LOG_CHARS = 16_000;
+/** Reports read per round of storage calls. */
+const READ_BATCH_SIZE = 20;
 
 /** The report id does not match any stored report. */
 export class ReportNotFoundError extends Error {}
@@ -19,23 +30,31 @@ export class ReportNotFoundError extends Error {}
 /** The caller may not act on this report. */
 export class ReportPermissionError extends Error {}
 
-export class ReportsManager {
-	private readonly host: PluginHost;
-	private readonly config: BugReportsConfig;
+/** The host surface the reports need: keyed storage and the logger. */
+export interface ReportsHost {
+	storage: Pick<PluginStorage, "get" | "set" | "update" | "delete">;
+	logger: PluginHost["logger"];
+}
 
-	constructor(host: PluginHost, config: BugReportsConfig) {
+export class ReportsManager {
+	private readonly host: ReportsHost;
+	private readonly config: BugReportsConfig;
+	private migration?: Promise<void>;
+	/** Writes run one after another, so the active-report limit is checked against the state it changes. */
+	private writeQueue: Promise<unknown> = Promise.resolve();
+
+	constructor(host: ReportsHost, config: BugReportsConfig) {
 		this.host = host;
 		this.config = config;
 	}
 
 	async getAllReports(): Promise<BugReport[]> {
-		const stored = await this.host.storage.get(STORAGE_KEY_REPORTS);
-		return isBugReportArray(stored) ? stored : [];
+		return await this.readReports(await this.readIndex());
 	}
 
 	async getReportById(id: string): Promise<BugReport | null> {
-		const all = await this.getAllReports();
-		return all.find((r) => r.id === id) ?? null;
+		await this.ensureMigrated();
+		return (await this.readReport(id)) ?? null;
 	}
 
 	async listReports(filters?: {
@@ -86,26 +105,33 @@ export class ReportsManager {
 			mediaId: input.mediaId,
 			mediaTitle: input.mediaTitle,
 			deviceInfo: input.deviceInfo,
-			logs: input.logs,
+			logs: input.logs?.slice(-MAX_LOG_CHARS),
 			reportedBy: user,
 			createdAt: now,
 			updatedAt: now,
 		};
 
-		// The limit is checked inside the locked update, so concurrent submissions cannot exceed it together.
-		await this.host.storage.update(STORAGE_KEY_REPORTS, (current) => {
-			const all = asReportArray(current);
-			const activeReportsCount = all.filter(
+		await this.serialize(async () => {
+			await this.ensureMigrated();
+			const ids = await this.readIndex();
+			if (ids.length >= MAX_STORED_REPORTS) {
+				throw new Error(`Report storage is full (${MAX_STORED_REPORTS} reports). Delete closed reports first.`);
+			}
+
+			const activeReportsCount = (await this.readReports(ids)).filter(
 				(r) => r.reportedBy.userId === user.userId && (r.status === "open" || r.status === "in_progress"),
 			).length;
-
 			if (activeReportsCount >= this.config.maxActiveReportsPerUser) {
 				throw new Error(`Active report limit reached (${this.config.maxActiveReportsPerUser}). Wait for earlier reports to be resolved.`);
 			}
 
-			return [...all, newReport];
+			await this.host.storage.set(this.reportKey(newReport.id), newReport);
+			await this.host.storage.update(INDEX_KEY, (current) => appendId(current, newReport.id));
 		});
 
+		if ((input.logs?.length ?? 0) > MAX_LOG_CHARS) {
+			this.host.logger.info("Bug report logs were trimmed to their newest characters", { id: newReport.id, maxChars: MAX_LOG_CHARS });
+		}
 		this.host.logger.info("New bug report created", {
 			id: newReport.id,
 			category: newReport.category,
@@ -117,48 +143,46 @@ export class ReportsManager {
 	}
 
 	async updateReport(id: string, input: UpdateBugReportInput): Promise<BugReport> {
-		const stored = await this.host.storage.update(STORAGE_KEY_REPORTS, (current) => {
-			const all = asReportArray(current);
-			const existing = all.find((r) => r.id === id);
-			if (!existing) {
+		return await this.serialize(async () => {
+			await this.ensureMigrated();
+			const stored = await this.host.storage.update(this.reportKey(id), (current) => {
+				if (!isBugReport(current)) {
+					throw new ReportNotFoundError(`Report with ID "${id}" does not exist.`);
+				}
+
+				const now = new Date().toISOString();
+				const updatedStatus = input.status ?? current.status;
+				const isResolving =
+					(updatedStatus === "resolved" || updatedStatus === "closed") && current.status !== "resolved" && current.status !== "closed";
+
+				return {
+					...current,
+					...(input.status ? { status: input.status } : {}),
+					...(input.severity ? { severity: input.severity } : {}),
+					...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}),
+					...(isResolving ? { resolvedAt: now } : {}),
+					updatedAt: now,
+				};
+			});
+
+			if (!isBugReport(stored)) {
 				throw new ReportNotFoundError(`Report with ID "${id}" does not exist.`);
 			}
 
-			const now = new Date().toISOString();
-			const updatedStatus = input.status ?? existing.status;
-			const isResolving =
-				(updatedStatus === "resolved" || updatedStatus === "closed") && existing.status !== "resolved" && existing.status !== "closed";
+			this.host.logger.info("Bug report updated", {
+				id,
+				status: stored.status,
+				severity: stored.severity,
+			});
 
-			const updatedReport: BugReport = {
-				...existing,
-				...(input.status ? { status: input.status } : {}),
-				...(input.severity ? { severity: input.severity } : {}),
-				...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}),
-				...(isResolving ? { resolvedAt: now } : {}),
-				updatedAt: now,
-			};
-
-			return all.map((r) => (r.id === id ? updatedReport : r));
+			return stored;
 		});
-
-		const updated = asReportArray(stored).find((r) => r.id === id);
-		if (!updated) {
-			throw new ReportNotFoundError(`Report with ID "${id}" does not exist.`);
-		}
-
-		this.host.logger.info("Bug report updated", {
-			id,
-			status: updated.status,
-			severity: updated.severity,
-		});
-
-		return updated;
 	}
 
 	async deleteReport(id: string, userId?: string, isAdmin?: boolean): Promise<void> {
-		await this.host.storage.update(STORAGE_KEY_REPORTS, (current) => {
-			const all = asReportArray(current);
-			const report = all.find((r) => r.id === id);
+		await this.serialize(async () => {
+			await this.ensureMigrated();
+			const report = await this.readReport(id);
 
 			if (!report) {
 				throw new ReportNotFoundError(`Report with ID "${id}" was not found.`);
@@ -168,7 +192,8 @@ export class ReportsManager {
 				throw new ReportPermissionError("You do not have permission to delete this report.");
 			}
 
-			return all.filter((r) => r.id !== id);
+			await this.host.storage.delete(this.reportKey(id));
+			await this.host.storage.update(INDEX_KEY, (current) => removeIds(current, [id]));
 		});
 
 		this.host.logger.info("Bug report deleted", { id, deletedBy: userId, isAdmin });
@@ -228,34 +253,118 @@ export class ReportsManager {
 		if (this.config.retentionDays <= 0) return 0;
 
 		const cutoffTime = Date.now() - this.config.retentionDays * 24 * 60 * 60 * 1000;
-		let removedCount = 0;
-		await this.host.storage.update(STORAGE_KEY_REPORTS, (current) => {
-			const all = asReportArray(current);
-			const toKeep = all.filter((r) => {
-				if (r.status !== "closed" && r.status !== "rejected" && r.status !== "resolved") {
-					return true;
-				}
-				const reportTime = new Date(r.updatedAt).getTime();
-				return reportTime >= cutoffTime;
-			});
+		const removedIds = await this.serialize(async () => {
+			await this.ensureMigrated();
+			const expired = (await this.getAllReports())
+				.filter(
+					(r) =>
+						(r.status === "closed" || r.status === "rejected" || r.status === "resolved") && new Date(r.updatedAt).getTime() < cutoffTime,
+				)
+				.map((r) => r.id);
 
-			removedCount = all.length - toKeep.length;
-			return toKeep;
+			for (const id of expired) await this.host.storage.delete(this.reportKey(id));
+			if (expired.length > 0) await this.host.storage.update(INDEX_KEY, (current) => removeIds(current, expired));
+
+			return expired;
 		});
 
-		if (removedCount > 0) {
-			this.host.logger.info(`Cleaned up ${removedCount} expired bug reports.`);
+		if (removedIds.length > 0) {
+			this.host.logger.info(`Cleaned up ${removedIds.length} expired bug reports.`);
 		}
 
-		return removedCount;
+		return removedIds.length;
+	}
+
+	private async serialize<T>(operation: () => Promise<T>): Promise<T> {
+		const previous = this.writeQueue;
+		const finished = Promise.withResolvers<void>();
+		this.writeQueue = finished.promise;
+		try {
+			await previous;
+
+			return await operation();
+		} finally {
+			finished.resolve();
+		}
+	}
+
+	private reportKey(id: string): string {
+		return `${REPORT_KEY_PREFIX}${id}`;
+	}
+
+	private async readReport(id: string): Promise<BugReport | undefined> {
+		const stored = await this.host.storage.get(this.reportKey(id));
+
+		return isBugReport(stored) ? stored : undefined;
+	}
+
+	private async readReports(ids: readonly string[]): Promise<BugReport[]> {
+		const reports: BugReport[] = [];
+		for (let start = 0; start < ids.length; start += READ_BATCH_SIZE) {
+			const batch = await Promise.all(ids.slice(start, start + READ_BATCH_SIZE).map((id) => this.readReport(id)));
+			for (const report of batch) {
+				if (report) reports.push(report);
+			}
+		}
+
+		return reports;
+	}
+
+	private async readIndex(): Promise<string[]> {
+		await this.ensureMigrated();
+		const stored = await this.host.storage.get(INDEX_KEY);
+
+		return isStringArray(stored) ? stored : [];
+	}
+
+	/** Moves reports kept by earlier versions into per-report keys once. Every caller shares that run, so no write can interleave with it. */
+	private ensureMigrated(): Promise<void> {
+		this.migration ??= this.migrateLegacyList();
+
+		return this.migration;
+	}
+
+	/** Each step can run again, so an interrupted move is safe. A failed run is retried by the next caller. */
+	private async migrateLegacyList(): Promise<void> {
+		try {
+			const legacy = await this.host.storage.get(LEGACY_LIST_KEY);
+			if (!isBugReportArray(legacy)) return;
+
+			for (const report of legacy) await this.host.storage.set(this.reportKey(report.id), report);
+			const legacyIds = legacy.map((report) => report.id);
+			await this.host.storage.update(INDEX_KEY, (current) => mergeIds(current, legacyIds));
+			await this.host.storage.delete(LEGACY_LIST_KEY);
+		} catch (error) {
+			this.migration = undefined;
+			throw error;
+		}
 	}
 }
 
-function isBugReportArray(value: unknown): value is BugReport[] {
-	return Array.isArray(value);
+function isBugReport(value: unknown): value is BugReport {
+	return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string";
 }
 
-/** The stored list, or an empty one when nothing valid is stored yet. */
-function asReportArray(value: unknown): BugReport[] {
-	return isBugReportArray(value) ? value : [];
+function isBugReportArray(value: unknown): value is BugReport[] {
+	return Array.isArray(value) && value.every((item) => isBugReport(item));
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function appendId(current: unknown, id: string): string[] {
+	const ids = isStringArray(current) ? current : [];
+
+	return ids.includes(id) ? ids : [...ids, id];
+}
+
+function mergeIds(current: unknown, added: readonly string[]): string[] {
+	return [...new Set([...(isStringArray(current) ? current : []), ...added])];
+}
+
+function removeIds(current: unknown, removed: readonly string[]): string[] {
+	const drop = new Set(removed);
+
+	return (isStringArray(current) ? current : []).filter((id) => !drop.has(id));
 }
