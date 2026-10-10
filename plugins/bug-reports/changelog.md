@@ -2,6 +2,7 @@
 
 ### Features
 
+- **Captured logs in the manage dialog** — the manage dialog shows the logs a report captured, read-only and scrollable. Reports without logs show no block.
 - **Report a bug from the player** — the player footer has a Report a bug button. A report sent from the player records the media file being played, and the manage dialog shows it.
 - **Reporter, page and device** — the manage dialog shows who reported a bug, the page it happened on, and the browser and operating system. Reports can be deleted after a confirmation.
 

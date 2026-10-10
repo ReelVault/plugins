@@ -1,4 +1,4 @@
-import { button, defineSchema, grid, heading, row, selectField, text, textareaField, when } from "@reelvault/sdk/ui/schema";
+import { button, code, defineSchema, grid, heading, row, section, selectField, text, textareaField, when } from "@reelvault/sdk/ui/schema";
 
 /**
  * "Manage" dialog opened from the admin reports table: shows the report and
@@ -36,6 +36,9 @@ export default defineSchema({
 			},
 			"muted",
 		),
+		when({ left: "data.report.report.logs", op: "truthy" }, [
+			section([code("{{data.report.report.logs}}")], { title: { en: "Captured logs", pl: "Zapisane logi" } }),
+		]),
 		grid(
 			[
 				selectField({
