@@ -1,6 +1,6 @@
 {
 	"name": "org.reelvault.tmdb",
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"type": "module",
 	"dependencies": {
 		"@lorenzopant/tmdb": "^2.1.0",

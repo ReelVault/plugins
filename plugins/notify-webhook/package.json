@@ -1,5 +1,6 @@
 {
 	"name": "org.reelvault.notify-webhook",
+	"version": "1.0.0",
 	"type": "module",
 	"devDependencies": {
 		"@reelvault/sdk": "^1.2.2",
