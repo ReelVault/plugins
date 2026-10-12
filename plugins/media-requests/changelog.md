@@ -1,9 +1,10 @@
-# v1.3.0
+# v1.0.3
 
 ### Features
 
 - **Quick request from a poster** — a small + in the poster corner requests the title after a confirmation. Tapping the poster opens its details.
 - **Confirmation sheet** — removing a request asks for confirmation in a plugin sheet, which becomes a bottom sheet on phones, instead of the browser's confirm dialog.
+- **Translated settings** — the setting labels and descriptions are in English, with Polish translations. They were Polish only.
 
 ### Fixes
 

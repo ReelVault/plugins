@@ -1,4 +1,4 @@
-# Community Markers (SponsorBlock-style) Plugin for ReelVault
+# Community Markers (`org.reelvault.community-markers`)
 
 Community-submitted and community-verified video segments (intro, credits,
 recaps, chapters and highlights) in the spirit of SponsorBlock.
@@ -57,6 +57,6 @@ Administrator routes:
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `autoApprove` | `false` | New segments go live for everyone immediately. |
-| `approvalThreshold` | `1` | Score needed to approve a segment in manual mode. |
-| `rejectionThreshold` | `-2` | Score (negative) at which a segment is rejected. |
+| `approvalThreshold` | `1` | Net score (upvotes minus downvotes) a segment needs to be approved in manual mode. |
+| `rejectionThreshold` | `-2` | Net score (negative) at which a segment is rejected. |
 | `downvotesToHide` | `2` | Downvotes at which a segment is hidden until an administrator decides. |

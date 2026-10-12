@@ -1,4 +1,8 @@
-# v1.3.0
+# v1.0.3
+
+### Features
+
+- **Translated settings** — the setting labels and descriptions are available in English and Polish.
 
 ### Fixes
 

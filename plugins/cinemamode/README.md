@@ -1,4 +1,4 @@
-# Cinemamode
+# Cinemamode (`org.reelvault.cinemamode`)
 
 Cinema mode for ReelVault — before a movie starts, the player rolls a few
 trailers of similar titles (by default only titles already in your library), so

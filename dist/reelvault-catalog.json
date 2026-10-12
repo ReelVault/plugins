@@ -5,7 +5,7 @@
 		{
 			"id": "org.reelvault.bug-reports",
 			"name": "Bug Reports",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "User-facing bug reporting for playback, metadata and UI problems, with an admin management panel and notifications.",
 			"category": "other",
 			"capabilities": [
@@ -14,10 +14,16 @@
 				"jobs",
 				"notification"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.1.zip",
-			"checksum": "sha256-20ffe210edf86364e97be162b9118d82ce0de9e15457cc40725cce6eed7b8500",
-			"date": "2026-10-08T11:14:24.246Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.2.zip",
+			"checksum": "sha256-2541988dcc6a218b2d8af6c2a5ef042b321e019ee55796009d5e418a17e38b88",
+			"date": "2026-10-12T22:53:04.693Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.1.zip",
+					"checksum": "sha256-20ffe210edf86364e97be162b9118d82ce0de9e15457cc40725cce6eed7b8500",
+					"date": "2026-10-08T11:14:24.246Z"
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.0.zip",
@@ -29,7 +35,7 @@
 		{
 			"id": "org.reelvault.cinemamode",
 			"name": "Cinemamode",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "Cinema at home — plays random trailers of similar titles from your library before a movie starts.",
 			"category": "integrations",
 			"homepage": "https://github.com/ReelVault/plugins",
@@ -41,10 +47,17 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.1.zip",
-			"checksum": "sha256-9d172dbd9cf6b5ee39e817b5026c4ee4b43a1c52e0db04816ed8f23ee3b39335",
-			"date": "2026-09-30T09:37:12.164Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.2.zip",
+			"checksum": "sha256-fd593de862b72253ebe7e230046d8313dcf0b944b53b74dadeecc6748b588d11",
+			"date": "2026-10-12T22:53:04.707Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.1.zip",
+					"checksum": "sha256-9d172dbd9cf6b5ee39e817b5026c4ee4b43a1c52e0db04816ed8f23ee3b39335",
+					"date": "2026-09-30T09:37:12.164Z",
+					"changelog": "First release — plays trailers before the feature."
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.cinemamode/org.reelvault.cinemamode-1.0.0.zip",
@@ -57,7 +70,7 @@
 		{
 			"id": "org.reelvault.community-markers",
 			"name": "Community Markers",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Community-shared segment markers (intro, credits, recaps) with SponsorBlock-style upvote/downvote voting.",
 			"category": "metadata",
 			"capabilities": [
@@ -67,37 +80,59 @@
 				"eventHandler",
 				"mediaRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.community-markers/org.reelvault.community-markers-1.0.0.zip",
-			"checksum": "sha256-b2796a5de770e5aa58eb5742aef3ad691de5f24561357081536e4ec15bd3d2f9",
-			"date": "2026-09-23T19:32:17.484Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.community-markers/org.reelvault.community-markers-1.0.1.zip",
+			"checksum": "sha256-1470ac2c340ee4d55c26e9229f64c8d5b48b34170f97a7a54fb0ac2497301515",
+			"date": "2026-10-12T22:53:04.682Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.community-markers/org.reelvault.community-markers-1.0.0.zip",
+					"checksum": "sha256-b2796a5de770e5aa58eb5742aef3ad691de5f24561357081536e4ec15bd3d2f9",
+					"date": "2026-09-23T19:32:17.484Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.notify-webhook",
 			"name": "Notify Webhook",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Delivers every in-app notification (new episodes, requests, plugin alerts) to any JSON webhook endpoint.",
 			"category": "automation",
 			"capabilities": [
 				"notificationChannel",
 				"httpFetch"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.notify-webhook/org.reelvault.notify-webhook-1.0.0.zip",
-			"checksum": "sha256-6709d21a8bd65f4042d384194a4f5738a1ead40fe03687f3d00706e45ab6cfd9",
-			"date": "2026-09-30T12:18:26.060Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.notify-webhook/org.reelvault.notify-webhook-1.0.1.zip",
+			"checksum": "sha256-01171f54e98b8a044bd9a8a557b74a5f6ce38f10ce503d5334af2e2cc8873f3f",
+			"date": "2026-10-12T22:53:04.712Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.notify-webhook/org.reelvault.notify-webhook-1.0.0.zip",
+					"checksum": "sha256-6709d21a8bd65f4042d384194a4f5738a1ead40fe03687f3d00706e45ab6cfd9",
+					"date": "2026-09-30T12:18:26.060Z"
+				}
+			]
 		},
 		{
 			"id": "org.reelvault.omdb",
 			"name": "OMDb Metadata Provider",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "Metadata provider backed by the OMDb API (IMDb data).",
 			"category": "metadata",
 			"capabilities": [
 				"metadataProvider"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.1.zip",
-			"checksum": "sha256-6ebb246eca37d06b976b1b5a47571060682b8ff358b14761e2ced3230a3b112f",
-			"date": "2026-10-08T11:14:23.711Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.2.zip",
+			"checksum": "sha256-ed632c263b10a5caab3778ccf9bd5e8360b596aa8159cae70467504936090f7d",
+			"date": "2026-10-12T22:53:04.370Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.1.zip",
+					"checksum": "sha256-6ebb246eca37d06b976b1b5a47571060682b8ff358b14761e2ced3230a3b112f",
+					"date": "2026-10-08T11:14:23.711Z"
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.omdb/org.reelvault.omdb-1.0.0.zip",
@@ -109,10 +144,10 @@
 		{
 			"id": "org.reelvault.requests",
 			"name": "Media Requests",
-			"version": "1.0.2",
+			"version": "1.0.3",
 			"description": "Users request missing movies and series; admins approve; users are notified automatically when a title lands in the library.",
 			"category": "automation",
-			"changelog": "1.0.2: request storage writes are now atomic (host-locked update) — concurrent submits and background availability checks no longer lose requests.",
+			"changelog": "1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update).",
 			"capabilities": [
 				"httpRoute",
 				"storage",
@@ -123,10 +158,17 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.2.zip",
-			"checksum": "sha256-db8acb25c729dd37473d04c29011066e26f3a76c66a2341862c77d283299c319",
-			"date": "2026-10-05T11:50:41.849Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.3.zip",
+			"checksum": "sha256-c94d92bac89218efefc8ed8087a899114100ee4a0e63022fdb2824a68b887e60",
+			"date": "2026-10-12T22:53:04.539Z",
 			"versions": [
+				{
+					"version": "1.0.2",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.2.zip",
+					"checksum": "sha256-db8acb25c729dd37473d04c29011066e26f3a76c66a2341862c77d283299c319",
+					"date": "2026-10-05T11:50:41.849Z",
+					"changelog": "1.0.2: request storage writes are now atomic (host-locked update) — concurrent submits and background availability checks no longer lose requests."
+				},
 				{
 					"version": "1.0.1",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.1.zip",
@@ -144,16 +186,23 @@
 		{
 			"id": "org.reelvault.tmdb",
 			"name": "TMDB Metadata Provider",
-			"version": "1.0.2",
+			"version": "1.0.3",
 			"description": "Metadata provider backed by The Movie Database API.",
 			"category": "metadata",
+			"changelog": "1.0.4: the fallback language is now always fetched — a library asking for another language (e.g. Polish) no longer silently disables the English fallback for titles, seasons and episodes. 1.0.3: request storage writes are now atomic.",
 			"capabilities": [
 				"metadataProvider"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.2.zip",
-			"checksum": "sha256-8aa39b2c8c0a4206268e58b945c4c5a52112f7864c1f3ca61801100bfddcd623",
-			"date": "2026-10-08T11:14:23.071Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.3.zip",
+			"checksum": "sha256-776c41ea2d212612d53397212c81c26445fa2c2d5b03a9a15e23b711056878b5",
+			"date": "2026-10-12T22:53:04.364Z",
 			"versions": [
+				{
+					"version": "1.0.2",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.2.zip",
+					"checksum": "sha256-8aa39b2c8c0a4206268e58b945c4c5a52112f7864c1f3ca61801100bfddcd623",
+					"date": "2026-10-08T11:14:23.071Z"
+				},
 				{
 					"version": "1.0.1",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.tmdb/org.reelvault.tmdb-1.0.1.zip",
@@ -171,7 +220,7 @@
 		{
 			"id": "org.reelvault.trailers",
 			"name": "Trailers",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"description": "On-demand YouTube trailer search and playback for movies and series.",
 			"category": "integrations",
 			"capabilities": [
@@ -180,10 +229,16 @@
 				"httpFetch",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.1.zip",
-			"checksum": "sha256-7951f35daf06f8ea6953a22a23aff20463d09c7d0ee724a42cb0af4a83683125",
-			"date": "2026-10-08T11:14:23.729Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.2.zip",
+			"checksum": "sha256-843d8f9084b05620129f398eadb864b213aef3dedac5bf5928fe1ace6c5ce9ad",
+			"date": "2026-10-12T22:53:04.380Z",
 			"versions": [
+				{
+					"version": "1.0.1",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.1.zip",
+					"checksum": "sha256-7951f35daf06f8ea6953a22a23aff20463d09c7d0ee724a42cb0af4a83683125",
+					"date": "2026-10-08T11:14:23.729Z"
+				},
 				{
 					"version": "1.0.0",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.trailers/org.reelvault.trailers-1.0.0.zip",
@@ -195,7 +250,7 @@
 		{
 			"id": "org.reelvault.webhooks",
 			"name": "Webhooks",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"description": "Sends server event notifications (new media, playback start/stop) to Discord, Telegram or any JSON endpoint.",
 			"category": "automation",
 			"capabilities": [
@@ -205,9 +260,17 @@
 				"httpFetch",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.webhooks/org.reelvault.webhooks-1.0.0.zip",
-			"checksum": "sha256-2dfe6d36a303df4b5c3b1d6c69263ce3e33d37b334e091aeef4f9809f5258729",
-			"date": "2026-09-23T19:32:17.484Z"
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.webhooks/org.reelvault.webhooks-1.0.1.zip",
+			"checksum": "sha256-733f5958ba647a5c662d2a1f4b3cc715a6c0993e6dcfb843f55503d4f08f0663",
+			"date": "2026-10-12T22:53:04.701Z",
+			"versions": [
+				{
+					"version": "1.0.0",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.webhooks/org.reelvault.webhooks-1.0.0.zip",
+					"checksum": "sha256-2dfe6d36a303df4b5c3b1d6c69263ce3e33d37b334e091aeef4f9809f5258729",
+					"date": "2026-09-23T19:32:17.484Z"
+				}
+			]
 		}
 	]
 }

@@ -1,7 +1,7 @@
 {
 	"id": "org.reelvault.omdb",
 	"name": "OMDb Metadata Provider",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Metadata provider backed by the OMDb API (IMDb data).",
 	"entry": "./index.ts",
 	"capabilities": ["metadataProvider"],

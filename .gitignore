@@ -69,9 +69,6 @@ out/
 .next
 .vercel
 
-# Tauri
-src-tauri/target/
-
 # ==================== #
 # TESTING
 # ==================== #

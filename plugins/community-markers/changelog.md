@@ -1,10 +1,12 @@
-# v1.3.0
+# v1.0.1
 
 ### Features
 
 - **Hidden until reviewed** — when downvotes reach `downvotesToHide` (default 2), the segment is hidden from the player and from other viewers until an administrator approves or rejects it. The author and administrators still see it, marked as hidden.
 - **Administrator decisions** — the admin list has confirm and reject actions and a Hidden status filter. A decision locks the segment against further votes and against deletion by its author.
 - **English and Polish interface** — the interface is translated and follows the host locale. Configuration labels stay in English.
+- **Translated settings** — the setting labels and descriptions are available in English and Polish.
+- **Clearer score settings** — `approvalThreshold` and `rejectionThreshold` are now *Approval score* and *Rejection score*. Their descriptions say the score is upvotes minus downvotes.
 
 ### Fixes
 

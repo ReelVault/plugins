@@ -1,3 +1,5 @@
-# v1.3.0
+# v1.0.2
 
-No user-facing changes in this release.
+### Features
+
+- **Translated settings** — the setting labels and descriptions are available in English and Polish.

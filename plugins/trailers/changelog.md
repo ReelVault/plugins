@@ -4,6 +4,7 @@
 
 - **Missing trailers remembered** — a title whose lookup finds no trailer is remembered for 24 hours, so TMDB is not searched again on every request. Found trailers are stored as before.
 - **"Cache all" removed** — the "Cache all trailers" button and its route are removed. They did nothing without a list of titles, and downloading every trailer is not worth the space.
+- **Translated settings** — the setting labels and descriptions are available in English and Polish.
 
 ### Fixes
 
