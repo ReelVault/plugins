@@ -5,19 +5,26 @@
 		{
 			"id": "org.reelvault.bug-reports",
 			"name": "Bug Reports",
-			"version": "1.0.2",
+			"version": "1.0.3",
 			"description": "User-facing bug reporting for playback, metadata and UI problems, with an admin management panel and notifications.",
 			"category": "other",
+			"changelog": "1.0.3: bug reports are stored again after an invalid storage key blocked every write, failed submissions return an error status, and reopened reports clear their resolution time.",
 			"capabilities": [
 				"httpRoute",
 				"storage",
 				"jobs",
 				"notification"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.2.zip",
-			"checksum": "sha256-2541988dcc6a218b2d8af6c2a5ef042b321e019ee55796009d5e418a17e38b88",
-			"date": "2026-10-12T22:53:04.693Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.3.zip",
+			"checksum": "sha256-7f0ab26a03309523afbcfeed0c59d12c025e85dbd118d18fd93e134163bdc8b4",
+			"date": "2026-11-03T13:34:11.425Z",
 			"versions": [
+				{
+					"version": "1.0.2",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.2.zip",
+					"checksum": "sha256-2541988dcc6a218b2d8af6c2a5ef042b321e019ee55796009d5e418a17e38b88",
+					"date": "2026-10-12T22:53:04.693Z"
+				},
 				{
 					"version": "1.0.1",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.bug-reports/org.reelvault.bug-reports-1.0.1.zip",
@@ -144,10 +151,10 @@
 		{
 			"id": "org.reelvault.requests",
 			"name": "Media Requests",
-			"version": "1.0.3",
+			"version": "1.0.4",
 			"description": "Users request missing movies and series; admins approve; users are notified automatically when a title lands in the library.",
 			"category": "automation",
-			"changelog": "1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update).",
+			"changelog": "1.0.4: failed requests return a readable error instead of crashing, My requests counters show only the current profile, and file-name matches link to the title. 1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update).",
 			"capabilities": [
 				"httpRoute",
 				"storage",
@@ -158,10 +165,17 @@
 				"mediaRead",
 				"metadataRead"
 			],
-			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.3.zip",
-			"checksum": "sha256-c94d92bac89218efefc8ed8087a899114100ee4a0e63022fdb2824a68b887e60",
-			"date": "2026-10-12T22:53:04.539Z",
+			"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.4.zip",
+			"checksum": "sha256-4989bb50b0fe4e1b9124905f66241bd890d71ff1069f8354dfc5f7d8e25cf1fc",
+			"date": "2026-11-03T13:34:11.412Z",
 			"versions": [
+				{
+					"version": "1.0.3",
+					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.3.zip",
+					"checksum": "sha256-c94d92bac89218efefc8ed8087a899114100ee4a0e63022fdb2824a68b887e60",
+					"date": "2026-10-12T22:53:04.539Z",
+					"changelog": "1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update)."
+				},
 				{
 					"version": "1.0.2",
 					"downloadUrl": "https://raw.githubusercontent.com/ReelVault/plugins/main/dist/plugins/org.reelvault.requests/org.reelvault.requests-1.0.2.zip",

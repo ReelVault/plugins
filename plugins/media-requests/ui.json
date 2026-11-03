@@ -1,6 +1,6 @@
 {
 	"name": "Media Requests",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"defaultLocale": "en",
 	"entry": "./dist/ui/index.js",
 	"pages": [

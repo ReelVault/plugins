@@ -1,3 +1,11 @@
+# v1.0.3
+
+### Fixes
+
+- **Bug reports are stored again** — the per-report storage key used a colon, which the host rejects, so creating, listing and cleaning up reports failed. The key now uses an allowed separator, and reports from the older single-value store migrate on first use.
+- **Failed submissions are reported** — invalid reports and limit conflicts return an error status instead of a successful response, so the form no longer closes as if the report was saved.
+- **Reopened reports** — reopening a resolved or closed report clears its resolution time.
+
 # v1.0.2
 
 ### Features

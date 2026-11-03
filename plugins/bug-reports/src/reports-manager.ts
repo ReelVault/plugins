@@ -12,7 +12,7 @@ import type {
 } from "../types";
 
 /** One key per report, so no single stored value grows with the number of reports. */
-const REPORT_KEY_PREFIX = "bug_report:";
+const REPORT_KEY_PREFIX = "bug_report_";
 /** The ids of every stored report. It is one value, so it is capped at MAX_STORED_REPORTS. */
 const INDEX_KEY = "bug_reports_index";
 /** Where earlier versions kept every report in one value; moved to per-report keys on first use. */
@@ -23,6 +23,9 @@ const MAX_STORED_REPORTS = 1_500;
 const MAX_LOG_CHARS = 16_000;
 /** Reports read per round of storage calls. */
 const READ_BATCH_SIZE = 20;
+
+/** The report conflicts with the active-report limit or the storage cap. */
+export class ReportConflictError extends Error {}
 
 /** The report id does not match any stored report. */
 export class ReportNotFoundError extends Error {}
@@ -115,14 +118,16 @@ export class ReportsManager {
 			await this.ensureMigrated();
 			const ids = await this.readIndex();
 			if (ids.length >= MAX_STORED_REPORTS) {
-				throw new Error(`Report storage is full (${MAX_STORED_REPORTS} reports). Delete closed reports first.`);
+				throw new ReportConflictError(`Report storage is full (${MAX_STORED_REPORTS} reports). Delete closed reports first.`);
 			}
 
 			const activeReportsCount = (await this.readReports(ids)).filter(
 				(r) => r.reportedBy.userId === user.userId && (r.status === "open" || r.status === "in_progress"),
 			).length;
 			if (activeReportsCount >= this.config.maxActiveReportsPerUser) {
-				throw new Error(`Active report limit reached (${this.config.maxActiveReportsPerUser}). Wait for earlier reports to be resolved.`);
+				throw new ReportConflictError(
+					`Active report limit reached (${this.config.maxActiveReportsPerUser}). Wait for earlier reports to be resolved.`,
+				);
 			}
 
 			await this.host.storage.set(this.reportKey(newReport.id), newReport);
@@ -154,6 +159,9 @@ export class ReportsManager {
 				const updatedStatus = input.status ?? current.status;
 				const isResolving =
 					(updatedStatus === "resolved" || updatedStatus === "closed") && current.status !== "resolved" && current.status !== "closed";
+				const isReopening =
+					(updatedStatus === "open" || updatedStatus === "in_progress") &&
+					(current.status === "resolved" || current.status === "closed" || current.status === "rejected");
 
 				return {
 					...current,
@@ -161,6 +169,7 @@ export class ReportsManager {
 					...(input.severity ? { severity: input.severity } : {}),
 					...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}),
 					...(isResolving ? { resolvedAt: now } : {}),
+					...(isReopening ? { resolvedAt: undefined } : {}),
 					updatedAt: now,
 				};
 			});

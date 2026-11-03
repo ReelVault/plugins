@@ -38,7 +38,7 @@ export function RequestsPage() {
 		try {
 			const [list, stats] = await Promise.all([
 				api.listRequests({ scope: "me", ...(filter !== "all" ? { status: filter } : {}) }),
-				api.summary(),
+				api.summary({ scope: "me" }),
 			]);
 			setRequests(list.requests);
 			setSummary(stats);

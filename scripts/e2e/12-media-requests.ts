@@ -172,6 +172,7 @@ async function main(): Promise<void> {
 
 	await suite.case("invalid request body is rejected", async (s) => {
 		const response = await userA.post<{ error?: string }>(`${base}/requests`, { title: "", mediaType: "cartoon" });
+		s.expect(response.status === 400, `invalid body -> ${response.status}`);
 		s.expect(Boolean(response.body.error), `invalid body -> ${response.status} ${JSON.stringify(response.body)}`);
 	});
 
@@ -188,6 +189,7 @@ async function main(): Promise<void> {
 		const response = await admin.patch<{ error?: string; success?: boolean; request?: Request }>(`${base}/requests/${requestId}`, {
 			status: "grant-wishes",
 		});
+		s.expect(response.status === 400, `invalid status -> ${response.status}`);
 		s.expect(Boolean(response.body.error), "invalid status accepted without error");
 	});
 
@@ -252,6 +254,7 @@ async function main(): Promise<void> {
 			break;
 		}
 		const overflow = await userB.post<{ error?: string }>(`${base}/requests`, { title: "One Too Many", mediaType: "movie" });
+		s.expect(overflow.status === 409, `overflow accepted: ${overflow.status} ${JSON.stringify(overflow.body)}`);
 		s.expect(Boolean(overflow.body.error), `overflow accepted: ${overflow.status} ${JSON.stringify(overflow.body)}`);
 		if (overflow.body.error)
 			s.expect(overflow.body.error.toLowerCase().includes("limit"), `limit error not descriptive: ${overflow.body.error}`);
@@ -275,10 +278,8 @@ async function main(): Promise<void> {
 		);
 		const foreignId = created.body.request?.id ?? "";
 		const response = await userA.delete<{ error?: string }>(`${base}/requests/${foreignId}`);
-		s.expect(
-			response.status === 403 || Boolean(response.body.error),
-			`foreign delete -> ${response.status} ${JSON.stringify(response.body)}`,
-		);
+		s.expect(response.status === 403, `foreign delete -> ${response.status} ${JSON.stringify(response.body)}`);
+		s.expect(Boolean(response.body.error), `foreign delete -> ${response.status} ${JSON.stringify(response.body)}`);
 		await userB.delete(`${base}/requests/${foreignId}`);
 	});
 

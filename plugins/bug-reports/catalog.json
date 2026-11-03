@@ -1,3 +1,4 @@
 {
-	"category": "other"
+	"category": "other",
+	"changelog": "1.0.3: bug reports are stored again after an invalid storage key blocked every write, failed submissions return an error status, and reopened reports clear their resolution time."
 }

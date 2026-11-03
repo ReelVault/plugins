@@ -39,7 +39,7 @@ All paths are relative to `/v1/plugins/org.reelvault.requests`:
 | `GET` | `/genres` | `user` | Genres (`mediaType`). |
 | `GET` | `/details` | `user` | Details (`providerId`, `externalId`, `mediaType`). |
 | `GET` | `/requests` | `user` | List requests (filter by status, type, range). |
-| `GET` | `/requests/summary` | `user` | Summary of requests. |
+| `GET` | `/requests/summary` | `user` | Request counts (`scope=me`; `scope=all` for admins). |
 | `POST` | `/requests` | `user` | New request (`title`, `mediaType`, `providerId`, `externalId`, …). |
 | `PATCH` | `/requests/:id` | `admin` | Change a request's status. |
 | `DELETE` | `/requests/:id` | `user` | Delete / cancel a request. |

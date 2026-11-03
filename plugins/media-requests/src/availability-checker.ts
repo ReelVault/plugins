@@ -143,7 +143,8 @@ export class AvailabilityChecker {
 				if (index === -1) continue;
 				const request = unresolved[index];
 				if (!request) continue;
-				await this.manager.markAsAvailable(request, file.mediaFileId);
+				const media = await this.host.media.get(file.mediaFileId);
+				await this.manager.markAsAvailable(request, media?.metadataId);
 				unresolved.splice(index, 1);
 				fulfilled++;
 			}

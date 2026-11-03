@@ -5,7 +5,7 @@ import { AvailabilityChecker } from "./src/availability-checker";
 import { DiscoverService } from "./src/discover-service";
 import { GenreTilesService } from "./src/genre-tiles";
 import { ProviderAccess } from "./src/provider-access";
-import { RequestsManager } from "./src/requests-manager";
+import { RequestConflictError, RequestNotFoundError, RequestPermissionError, RequestsManager } from "./src/requests-manager";
 import type { CreateMediaRequestInput, MediaRequestStatus, MediaRequestType } from "./types";
 
 const DISCOVERY_CATEGORIES: ReadonlySet<string> = new Set([
@@ -251,8 +251,9 @@ export default definePlugin(config, {
 		await host.routes.register({
 			method: "GET",
 			path: "/requests/summary",
-			handler: async () => {
-				const summary = await manager.getSummary();
+			handler: async ({ query, user }) => {
+				const scope = query.scope === "all" && user.role === "admin" ? "all" : "me";
+				const summary = await manager.getSummary(scope === "me" ? user.id : undefined);
 				return {
 					body: summary,
 				};
@@ -282,6 +283,7 @@ export default definePlugin(config, {
 				const input = parseCreateRequestInput(body);
 				if (!input) {
 					return {
+						status: 400,
 						body: { error: "The 'title' and 'mediaType' ('movie' | 'tv_show') fields are required." },
 					};
 				}
@@ -302,9 +304,13 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to create the request." },
-					};
+					const message = err instanceof Error ? err.message : "Failed to create the request.";
+					if (err instanceof RequestConflictError) {
+						return { status: 409, body: { error: message } };
+					}
+
+					host.logger.error("Failed to create the request", err, { userId: user.id });
+					return { status: 500, body: { error: "Failed to create the request." } };
 				}
 			},
 		});
@@ -318,11 +324,11 @@ export default definePlugin(config, {
 				const id = params.id;
 
 				if (!id) {
-					return { body: { error: "Missing request ID." } };
+					return { status: 400, body: { error: "Missing request ID." } };
 				}
 
 				if (!(isRecord(body) && isRequestStatus(body.status))) {
-					return { body: { error: "Invalid request status." } };
+					return { status: 400, body: { error: "Invalid request status." } };
 				}
 				const notes = typeof body.notes === "string" ? body.notes : undefined;
 
@@ -336,9 +342,12 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to update the request." },
-					};
+					if (err instanceof RequestNotFoundError) {
+						return { status: 404, body: { error: err.message } };
+					}
+
+					host.logger.error("Failed to update the request", err, { requestId: id });
+					return { status: 500, body: { error: "Failed to update the request." } };
 				}
 			},
 		});
@@ -350,7 +359,7 @@ export default definePlugin(config, {
 			handler: async ({ params, user }) => {
 				const id = params.id;
 				if (!id) {
-					return { body: { error: "Missing request ID." } };
+					return { status: 400, body: { error: "Missing request ID." } };
 				}
 
 				const isAdmin = user.role === "admin";
@@ -366,9 +375,15 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to delete the request." },
-					};
+					if (err instanceof RequestNotFoundError) {
+						return { status: 404, body: { error: err.message } };
+					}
+					if (err instanceof RequestPermissionError) {
+						return { status: 403, body: { error: err.message } };
+					}
+
+					host.logger.error("Failed to delete the request", err, { requestId: id });
+					return { status: 500, body: { error: "Failed to delete the request." } };
 				}
 			},
 		});

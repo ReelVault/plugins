@@ -1,4 +1,4 @@
 {
 	"category": "automation",
-	"changelog": "1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update)."
+	"changelog": "1.0.4: failed requests return a readable error instead of crashing, My requests counters show only the current profile, and file-name matches link to the title. 1.0.3: the Requests and My requests pages no longer add top-navigation buttons — they live in the profile menu next to the existing entry. 1.0.2: request storage writes are now atomic (host-locked update)."
 }

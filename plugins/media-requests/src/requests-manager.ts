@@ -4,11 +4,23 @@ import type { CreateMediaRequestInput, MediaRequest, MediaRequestStatus, MediaRe
 
 const STORAGE_KEY_REQUESTS = "requests_list";
 
+/** The request surface the manager needs: keyed storage, notifications and the logger. */
+export type RequestsHost = Pick<PluginHost, "storage" | "notifications" | "logger">;
+
+/** The request conflicts with the active-request limit or an existing request. */
+export class RequestConflictError extends Error {}
+
+/** The request id does not match any stored request. */
+export class RequestNotFoundError extends Error {}
+
+/** The caller may not act on this request. */
+export class RequestPermissionError extends Error {}
+
 export class RequestsManager {
-	private readonly host: PluginHost;
+	private readonly host: RequestsHost;
 	private readonly config: MediaRequestsConfig;
 
-	constructor(host: PluginHost, config: MediaRequestsConfig) {
+	constructor(host: RequestsHost, config: MediaRequestsConfig) {
 		this.host = host;
 		this.config = config;
 	}
@@ -63,7 +75,7 @@ export class RequestsManager {
 			).length;
 
 			if (userActiveCount >= this.config.maxActiveRequestsPerUser) {
-				throw new Error(
+				throw new RequestConflictError(
 					`Active request limit reached (${this.config.maxActiveRequestsPerUser}). Wait for earlier requests to be fulfilled.`,
 				);
 			}
@@ -79,9 +91,9 @@ export class RequestsManager {
 
 			if (existing) {
 				if (existing.status === "available") {
-					throw new Error(`"${input.title}" is already marked as available in the library.`);
+					throw new RequestConflictError(`"${input.title}" is already marked as available in the library.`);
 				}
-				throw new Error(`A request for this title already exists (status: ${existing.status}).`);
+				throw new RequestConflictError(`A request for this title already exists (status: ${existing.status}).`);
 			}
 
 			const now = new Date().toISOString();
@@ -132,7 +144,7 @@ export class RequestsManager {
 			const all = isMediaRequestArray(current) ? current : [];
 			const req = all.find((r) => r.id === id);
 			if (!req) {
-				throw new Error(`Request with ID ${id} not found.`);
+				throw new RequestNotFoundError(`Request with ID ${id} not found.`);
 			}
 
 			req.status = status;
@@ -151,7 +163,6 @@ export class RequestsManager {
 		});
 
 		if (!updated) throw new Error(`Request status update for ${id} did not persist.`);
-
 		const req = updated;
 
 		this.host.logger.info("Media request status updated", {
@@ -171,10 +182,10 @@ export class RequestsManager {
 			const index = all.findIndex((r) => r.id === id);
 			const req = all[index];
 			if (!req) {
-				throw new Error(`Request with ID ${id} not found.`);
+				throw new RequestNotFoundError(`Request with ID ${id} not found.`);
 			}
 			if (!isAdmin && requesterUserId && req.requestedBy.userId !== requesterUserId) {
-				throw new Error("You do not have permission to delete this request.");
+				throw new RequestPermissionError("You do not have permission to delete this request.");
 			}
 
 			deletedTitle = req.title;
@@ -186,7 +197,7 @@ export class RequestsManager {
 		this.host.logger.info("Media request deleted", { id, title: deletedTitle });
 	}
 
-	async markAsAvailable(request: MediaRequest, metadataId: string): Promise<void> {
+	async markAsAvailable(request: MediaRequest, metadataId?: string): Promise<void> {
 		let fulfilled: MediaRequest | undefined;
 
 		await this.host.storage.update(STORAGE_KEY_REQUESTS, (current) => {
@@ -210,7 +221,7 @@ export class RequestsManager {
 		this.host.logger.info("Media request fulfilled and marked as available", {
 			requestId: fulfilled.id,
 			title: fulfilled.title,
-			metadataId,
+			...(metadataId ? { metadataId } : {}),
 			userId: fulfilled.requestedBy.userId,
 		});
 
@@ -225,11 +236,11 @@ export class RequestsManager {
 					message: `"${fulfilled.title}" was just added to your ReelVault library.`,
 					data: {
 						requestId: fulfilled.id,
-						metadataId,
+						...(metadataId ? { metadataId } : {}),
 						title: fulfilled.title,
 						mediaType: fulfilled.mediaType,
 					},
-					link: `/metadata/${metadataId}`,
+					...(metadataId ? { link: `/metadata/${metadataId}` } : {}),
 				});
 				this.host.logger.info("Notification sent to user for fulfilled request", {
 					userId: fulfilled.requestedBy.userId,
@@ -244,15 +255,16 @@ export class RequestsManager {
 		}
 	}
 
-	async getSummary(): Promise<RequestsSummary> {
+	async getSummary(userId?: string): Promise<RequestsSummary> {
 		const all = await this.getAllRequests();
+		const scoped = userId ? all.filter((request) => request.requestedBy.userId === userId) : all;
 		return {
-			total: all.length,
-			pending: all.filter((r) => r.status === "pending").length,
-			approved: all.filter((r) => r.status === "approved").length,
-			inProgress: all.filter((r) => r.status === "in_progress").length,
-			available: all.filter((r) => r.status === "available").length,
-			rejected: all.filter((r) => r.status === "rejected").length,
+			total: scoped.length,
+			pending: scoped.filter((r) => r.status === "pending").length,
+			approved: scoped.filter((r) => r.status === "approved").length,
+			inProgress: scoped.filter((r) => r.status === "in_progress").length,
+			available: scoped.filter((r) => r.status === "available").length,
+			rejected: scoped.filter((r) => r.status === "rejected").length,
 		};
 	}
 }

@@ -59,7 +59,7 @@ async function main(): Promise<void> {
 
 	await suite.case("report without title is rejected", async (s) => {
 		const response = await userA.post<object>(`${base}/reports`, { title: "", category: "ui" });
-		s.expect(response.status === 200 || response.status === 400, `no title -> ${response.status}`);
+		s.expect(response.status === 400, `no title -> ${response.status}`);
 		s.expect(hasErrorBody(response.body), "missing title produced no error message");
 	});
 
@@ -145,7 +145,8 @@ async function main(): Promise<void> {
 		const second = await userB.post<ReportResponse>(`${base}/reports`, { title: "Limit probe 2", category: "general" });
 		const third = await userB.post<object>(`${base}/reports`, { title: "Limit probe 3", category: "general" });
 		s.expect(first.status === 201 && second.status === 201, `first two reports failed: ${first.status}/${second.status}`);
-		s.expect(hasErrorBody(third.body), `third report should hit the limit: ${third.status} ${JSON.stringify(third.body)}`);
+		s.expect(third.status === 409, `third report should hit the limit: ${third.status} ${JSON.stringify(third.body)}`);
+		s.expect(hasErrorBody(third.body), `third report should carry an error body: ${third.status} ${JSON.stringify(third.body)}`);
 		const restore = await admin.put("/v1/admin/plugins/org.reelvault.bug-reports/config", {
 			cookie: state.adminCookie,
 			body: { maxActiveReportsPerUser: 20 },

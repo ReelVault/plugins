@@ -5,6 +5,14 @@ import type { BugReport, BugReportUser } from "../plugins/bug-reports/types";
 
 /** The host's limit for one stored value (serverConfig.plugins.storage.maxValueBytes). */
 const VALUE_LIMIT_BYTES = 64 * 1024;
+/** The host rejects keys outside this pattern; the in-memory host enforces it too. */
+const STORAGE_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+function assertStorageKey(key: string): void {
+	if (!STORAGE_KEY_PATTERN.test(key) || key.length > 128) {
+		throw new Error(`Plugin storage key must match [A-Za-z0-9._-] and be at most 128 characters: ${key}`);
+	}
+}
 
 const config: BugReportsConfig = { notifyAdminsOnReport: true, maxActiveReportsPerUser: 2, retentionDays: 90 };
 const alice: BugReportUser = { userId: "alice" };
@@ -30,19 +38,26 @@ function memoryHost(initial: Record<string, unknown> = {}) {
 	const values = new Map<string, unknown>(Object.entries(initial));
 	const host: ReportsHost = {
 		storage: {
-			get: (key) => Promise.resolve(values.get(key)),
+			get: (key) => {
+				assertStorageKey(key);
+
+				return Promise.resolve(values.get(key));
+			},
 			set: (key, value) => {
+				assertStorageKey(key);
 				values.set(key, structuredClone(value));
 
 				return Promise.resolve();
 			},
 			update: (key, updater) => {
+				assertStorageKey(key);
 				const next = updater(values.get(key));
 				values.set(key, next);
 
 				return Promise.resolve(next);
 			},
 			delete: (key) => {
+				assertStorageKey(key);
 				values.delete(key);
 
 				return Promise.resolve();
@@ -76,8 +91,8 @@ describe("bug report storage", () => {
 		const first = await manager.createReport({ title: "Playback stutters" }, alice);
 		const second = await manager.createReport({ title: "Subtitles drift" }, bob);
 
-		expect(values.has(`bug_report:${first.id}`)).toBe(true);
-		expect(values.has(`bug_report:${second.id}`)).toBe(true);
+		expect(values.has(`bug_report_${first.id}`)).toBe(true);
+		expect(values.has(`bug_report_${second.id}`)).toBe(true);
 		expect((await manager.listReports()).map((report) => report.id).toSorted()).toEqual([first.id, second.id].toSorted());
 	});
 
@@ -87,7 +102,7 @@ describe("bug report storage", () => {
 
 		expect((await manager.getReportById("r1"))?.title).toBe("Report r1");
 		expect(values.has("bug_reports_list")).toBe(false);
-		expect(values.has("bug_report:r1")).toBe(true);
+		expect(values.has("bug_report_r1")).toBe(true);
 	});
 
 	test("refuses a new report once the user has the maximum of open ones", async () => {
@@ -142,7 +157,7 @@ describe("bug report storage", () => {
 		// "€" takes 3 bytes in UTF-8, the widest character the logs can hold per character.
 		const report = await manager.createReport({ title: "Wide logs", logs: "€".repeat(30_000) }, alice);
 
-		const stored = values.get(`bug_report:${report.id}`);
+		const stored = values.get(`bug_report_${report.id}`);
 		expect(new TextEncoder().encode(JSON.stringify(stored)).byteLength).toBeLessThan(VALUE_LIMIT_BYTES);
 	});
 
@@ -152,10 +167,22 @@ describe("bug report storage", () => {
 		const report = await manager.createReport({ title: "Old" }, alice);
 		await manager.updateReport(report.id, { status: "closed" });
 		const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-		values.set(`bug_report:${report.id}`, { ...(values.get(`bug_report:${report.id}`) as BugReport), updatedAt: threeDaysAgo });
+		values.set(`bug_report_${report.id}`, { ...(values.get(`bug_report_${report.id}`) as BugReport), updatedAt: threeDaysAgo });
 
 		expect(await manager.cleanupOldReports()).toBe(1);
-		expect(values.has(`bug_report:${report.id}`)).toBe(false);
+		expect(values.has(`bug_report_${report.id}`)).toBe(false);
 		expect(values.get("bug_reports_index")).toEqual([]);
+	});
+
+	test("clears the resolution time when a closed report is reopened", async () => {
+		const { host } = memoryHost();
+		const manager = new ReportsManager(host, config);
+		const report = await manager.createReport({ title: "Reopen me" }, alice);
+		const resolved = await manager.updateReport(report.id, { status: "resolved" });
+
+		expect(typeof resolved.resolvedAt).toBe("string");
+		const reopened = await manager.updateReport(report.id, { status: "open" });
+
+		expect(reopened.resolvedAt).toBeUndefined();
 	});
 });

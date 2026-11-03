@@ -1,6 +1,6 @@
 import { definePlugin, fail } from "@reelvault/sdk/plugin";
 import { config } from "./config";
-import { ReportNotFoundError, ReportPermissionError, ReportsManager } from "./src/reports-manager";
+import { ReportConflictError, ReportNotFoundError, ReportPermissionError, ReportsManager } from "./src/reports-manager";
 import type {
 	BugReportCategory,
 	BugReportDeviceInfo,
@@ -210,6 +210,7 @@ export default definePlugin(config, {
 				const input = parseCreateBugReportInput(body);
 				if (!input) {
 					return {
+						status: 400,
 						body: { error: "The 'title' field is required." },
 					};
 				}
@@ -247,9 +248,12 @@ export default definePlugin(config, {
 						},
 					};
 				} catch (err: unknown) {
-					return {
-						body: { error: err instanceof Error ? err.message : "Failed to create the report." },
-					};
+					if (err instanceof ReportConflictError) {
+						return { status: 409, body: { error: err.message } };
+					}
+
+					host.logger.error("Failed to create the bug report", err, { userId });
+					return { status: 500, body: { error: "Failed to create the report." } };
 				}
 			},
 		});

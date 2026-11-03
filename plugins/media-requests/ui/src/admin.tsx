@@ -53,7 +53,7 @@ export function AdminPage() {
 					...(statusFilter !== "all" ? { status: statusFilter } : {}),
 					...(typeFilter !== "all" ? { mediaType: typeFilter } : {}),
 				}),
-				api.summary(),
+				api.summary({ scope: "all" }),
 			]);
 			setRequests(list.requests);
 			setSummary(stats);

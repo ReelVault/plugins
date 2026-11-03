@@ -1,3 +1,11 @@
+# v1.0.4
+
+### Fixes
+
+- **Failed requests explain themselves** — a request that duplicates an existing one or hits the active-request limit now returns an error status with the reason, and the page shows the message instead of crashing.
+- **My requests statistics** — the counters show only the current profile's requests; the admin page still shows all requests.
+- **Library links for file-name matches** — a request fulfilled by matching a file name now links to the title instead of using the media-file id as a title id.
+
 # v1.0.3
 
 ### Features

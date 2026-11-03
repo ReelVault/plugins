@@ -29,6 +29,18 @@ export interface RequestMutationResponse {
 	request: MediaRequest;
 }
 
+interface ErrorEnvelope {
+	error?: string;
+}
+
+/** Turns a legacy 200 response carrying `{ error }` into a rejected promise. */
+async function mutation<T extends object>(promise: Promise<T & ErrorEnvelope>): Promise<T> {
+	const result = await promise;
+	if (typeof result.error === "string" && result.error.length > 0) throw new Error(result.error);
+
+	return result;
+}
+
 export interface CreateRequestPayload {
 	title: string;
 	mediaType: "movie" | "tv_show";
@@ -62,7 +74,7 @@ export interface PluginApi {
 	details(query: { providerId: string; externalId: string; mediaType: "movie" | "tv_show" }): Promise<MediaDetails>;
 	season(query: { providerId: string; externalId: string; seasonNumber: number }): Promise<MediaSeasonDetails>;
 	listRequests(query?: { scope?: string; status?: string; mediaType?: string }): Promise<RequestsResponse>;
-	summary(): Promise<RequestsSummary>;
+	summary(query?: { scope?: string }): Promise<RequestsSummary>;
 	comingSoon(): Promise<ComingSoonResponse>;
 	createRequest(body: CreateRequestPayload): Promise<RequestMutationResponse>;
 	updateRequest(id: string, body: { status: MediaRequestStatus; notes?: string }): Promise<RequestMutationResponse>;
@@ -90,10 +102,12 @@ export function createApi(host: PluginUiHost): PluginApi {
 		details: (query) => call<MediaDetails>("/details", { query: compactQuery({ ...query }) }),
 		season: (query) => call<MediaSeasonDetails>("/seasons", { query: compactQuery({ ...query }) }),
 		listRequests: (query) => call<RequestsResponse>("/requests", { query: compactQuery({ ...query }) }),
-		summary: () => call<RequestsSummary>("/requests/summary"),
+		summary: (query) => call<RequestsSummary>("/requests/summary", { query: compactQuery({ ...query }) }),
 		comingSoon: () => call<ComingSoonResponse>("/coming-soon"),
-		createRequest: (body) => call<RequestMutationResponse>("/requests", { method: "POST", body }),
-		updateRequest: (id, body) => call<RequestMutationResponse>(`/requests/${encodeURIComponent(id)}`, { method: "PATCH", body }),
-		deleteRequest: (id) => call<{ success: boolean }>(`/requests/${encodeURIComponent(id)}`, { method: "DELETE" }),
+		createRequest: (body) => mutation(call<RequestMutationResponse & ErrorEnvelope>("/requests", { method: "POST", body })),
+		updateRequest: (id, body) =>
+			mutation(call<RequestMutationResponse & ErrorEnvelope>(`/requests/${encodeURIComponent(id)}`, { method: "PATCH", body })),
+		deleteRequest: (id) =>
+			mutation(call<{ success: boolean } & ErrorEnvelope>(`/requests/${encodeURIComponent(id)}`, { method: "DELETE" })),
 	};
 }
